@@ -149,6 +149,8 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 this.onTLUpdateBotWebhookJSONQuery((TLUpdateBotWebhookJSONQuery) update);
             } else if (update instanceof TLUpdateChannel) {
                 this.onTLUpdateChannel((TLUpdateChannel) update, updateWrapper.isGettingDifferences());
+            } else if (update instanceof TLUpdateChannelTooLong) {
+                this.onTLUpdateChannelTooLong((TLUpdateChannelTooLong) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelAvailableMessages) {
                 this.onTLUpdateChannelAvailableMessages((TLUpdateChannelAvailableMessages) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelMessageViews) {

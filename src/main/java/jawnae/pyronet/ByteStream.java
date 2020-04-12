@@ -4,8 +4,8 @@
 
 package jawnae.pyronet;
 
-import org.telegram.mtproto.transport.BuffersStorage;
-import org.telegram.mtproto.transport.ByteBufferDesc;
+import org.javagram.mtproto.transport.BuffersStorage;
+import org.javagram.mtproto.transport.ByteBufferDesc;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

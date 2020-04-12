@@ -19,7 +19,6 @@ public class TLPaymentsValidatedRequestedInfo extends TLObject {
     private static final int FLAG_ID                     = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTIONS       = 0x00000002; // 1
 
-    private int flags;
     private String id;
     private TLVector<TLShippingOption> shippingOptions;
 

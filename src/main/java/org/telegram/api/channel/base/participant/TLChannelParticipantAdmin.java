@@ -21,11 +21,6 @@ public class TLChannelParticipantAdmin extends TLAbsChannelParticipant {
     private static final int FLAG_SELF      = 0x00000002; // 1
     private static final int FLAG_RANK      = 0x00000004; // 2
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
     private int userId;
     private int inviterId;
     private int promotedBy;
@@ -40,14 +35,6 @@ public class TLChannelParticipantAdmin extends TLAbsChannelParticipant {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public int getPromotedBy() {

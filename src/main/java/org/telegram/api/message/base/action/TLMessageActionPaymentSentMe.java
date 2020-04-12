@@ -22,11 +22,6 @@ public class TLMessageActionPaymentSentMe extends TLAbsMessageAction {
 
     private static final int FLAG_INFO                     = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTION_ID       = 0x00000002; // 1
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * Three-letter ISO 4217 @see <a href="https://core.telegram.org/bots/payments#supported-currencies">currency</a> code
@@ -63,14 +58,6 @@ public class TLMessageActionPaymentSentMe extends TLAbsMessageAction {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public String getCurrency() {

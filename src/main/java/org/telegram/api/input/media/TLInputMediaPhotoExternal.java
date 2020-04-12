@@ -18,10 +18,6 @@ public class TLInputMediaPhotoExternal extends TLAbsInputMedia {
 
     private static final int FLAG_TTL_SECONDS   = 0x00000001; // 0
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     private String url;
     private int ttlSeconds;
 
@@ -40,14 +36,6 @@ public class TLInputMediaPhotoExternal extends TLAbsInputMedia {
 
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public int getTtlSeconds() {

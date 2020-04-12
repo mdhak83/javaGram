@@ -19,11 +19,6 @@ public class TLInputMediaInvoice extends TLAbsInputMedia {
 
     private static final int FLAG_PHOTO = 0x00000001; // 0
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
     private String title;
     private String description;
     private TLInputWebDocument photo;
@@ -40,14 +35,6 @@ public class TLInputMediaInvoice extends TLAbsInputMedia {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLDataJSON getProviderData() {

@@ -22,7 +22,6 @@ public class TLRequestMessagesGetRecentStickers extends TLMethod<TLAbsMessagesRe
 
     private static final int FLAG_ATTACHED = 0x00000001; // 0
 
-    private int flags;
     private int hash;
 
     public TLRequestMessagesGetRecentStickers() {

@@ -19,11 +19,6 @@ public class TLMessagesFilterPhoneCalls extends TLAbsMessagesFilter {
 
     private static final int FLAG_MISSED    = 0x00000001; // 0 : Return only missed phone calls
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     public TLMessagesFilterPhoneCalls() {
         super();
     }

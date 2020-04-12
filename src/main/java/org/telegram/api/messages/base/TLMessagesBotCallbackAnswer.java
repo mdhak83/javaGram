@@ -18,7 +18,6 @@ public class TLMessagesBotCallbackAnswer extends TLObject {
     private static final int FLAG_URL       = 0x00000004; // 2
     private static final int FLAG_HAS_URL   = 0x00000008; // 3
 
-    private int flags;
     private String message;
     private String url;
     private int cacheTime;

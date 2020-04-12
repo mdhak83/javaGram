@@ -19,11 +19,6 @@ public class TLInputBotInlineMessageMediaContact extends TLAbsInputBotInlineMess
 
     private static final int FLAG_REPLY_MARKUP  = 0x00000004; // 2
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private String phoneNumber;
     private String firstName;
     private String lastName;
@@ -37,14 +32,6 @@ public class TLInputBotInlineMessageMediaContact extends TLAbsInputBotInlineMess
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public void setPhoneNumber(String phoneNumber) {

@@ -36,7 +36,6 @@ public class TLUpdateStickerSetsOrder extends TLAbsUpdate {
 
     private static final int FLAG_MASKS = 0x00000001; // 0
 
-    private int flags;
     private TLLongVector order;
 
     public TLUpdateStickerSetsOrder() {

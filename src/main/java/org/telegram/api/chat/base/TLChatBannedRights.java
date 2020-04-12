@@ -27,7 +27,6 @@ public class TLChatBannedRights extends TLObject {
     private static final int FLAG_INVITE_USERS      = 0x00008000; // 15
     private static final int FLAG_PIN_MESSAGES      = 0x00020000; // 17
 
-    private int flags;
     private int untilDate;
 
     public TLChatBannedRights() {
@@ -37,14 +36,6 @@ public class TLChatBannedRights extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public int getUntilDate() {

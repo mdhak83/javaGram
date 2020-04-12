@@ -19,15 +19,9 @@ public class TLReplayKeyboardHide extends TLAbsReplyMarkup {
     private static final int FLAG_UNUSED1 = 0x00000002; // 1
     private static final int FLAG_SELECTIVE = 0x00000004; // 2
 
-    private int flags;
-
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     @Override

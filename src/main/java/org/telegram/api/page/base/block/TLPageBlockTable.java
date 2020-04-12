@@ -24,11 +24,6 @@ public class TLPageBlockTable extends TLAbsPageBlock {
     private static final int FLAG_STRIPED   = 0x00000002; // 1 : Is the table striped?
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * Title
      */
     private TLAbsRichText title;
@@ -45,14 +40,6 @@ public class TLPageBlockTable extends TLAbsPageBlock {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean isBordered() {

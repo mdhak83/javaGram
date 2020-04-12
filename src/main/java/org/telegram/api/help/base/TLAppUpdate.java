@@ -24,11 +24,6 @@ public class TLAppUpdate extends TLAbsHelpAppUpdate {
     private static final int FLAG_URL           = 0x00000004; // 2 : Application download URL
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Update ID
      */
     private int id;
@@ -65,14 +60,6 @@ public class TLAppUpdate extends TLAbsHelpAppUpdate {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public int getId() {

@@ -19,11 +19,6 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
 
     private static final int FLAG_URL = 0x00000001; // 0
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private long photoId;
     private TLPageCaption caption;
     private String url;
@@ -36,14 +31,6 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public long getPhotoId() {

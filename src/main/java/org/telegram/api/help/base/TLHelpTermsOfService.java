@@ -25,11 +25,6 @@ public class TLHelpTermsOfService extends TLObject {
     private static final int FLAG_MIN_AGE_CONFIRM   = 0x00000002; // 1 : Minimum age required to sign up to telegram, the user must confirm that they is older than the minimum age.
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * ID of the new terms
      */
     private TLDataJSON id;
@@ -56,14 +51,6 @@ public class TLHelpTermsOfService extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     /**

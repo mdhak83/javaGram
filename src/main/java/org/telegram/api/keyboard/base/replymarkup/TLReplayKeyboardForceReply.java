@@ -26,10 +26,6 @@ public class TLReplayKeyboardForceReply extends TLAbsReplyMarkup {
         return CLASS_ID;
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);

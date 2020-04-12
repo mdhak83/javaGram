@@ -21,11 +21,6 @@ public class TLHelpDeepLinkInfo extends TLAbsHelpDeepLinkInfo {
 
     private static final int FLAG_UPDATE_APP    = 0x00000001; // 0
     private static final int FLAG_ENTITIES      = 0x00000002; // 1
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * Message to show to the user
@@ -46,14 +41,6 @@ public class TLHelpDeepLinkInfo extends TLAbsHelpDeepLinkInfo {
         return CLASS_ID;
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-    
     public boolean isAppUpdateRequired() {
         return this.isFlagSet(FLAG_UPDATE_APP);
     }

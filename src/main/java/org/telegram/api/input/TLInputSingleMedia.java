@@ -24,11 +24,6 @@ public class TLInputSingleMedia extends TLObject {
     private static final int FLAG_ENTITIES  = 0x00000001; // 0
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * The media
      */
     private TLAbsInputMedia media;
@@ -55,14 +50,6 @@ public class TLInputSingleMedia extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLAbsInputMedia getMedia() {

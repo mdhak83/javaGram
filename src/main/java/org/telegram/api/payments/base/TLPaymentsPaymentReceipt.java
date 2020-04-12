@@ -22,7 +22,6 @@ public class TLPaymentsPaymentReceipt extends TLObject {
     private static final int FLAG_INFO              = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTIONS  = 0x00000002; // 1
 
-    private int flags;
     private int date;
     private int botId;
     private TLInvoice invoice;

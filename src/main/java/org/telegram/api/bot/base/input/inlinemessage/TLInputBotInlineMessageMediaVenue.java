@@ -20,11 +20,6 @@ public class TLInputBotInlineMessageMediaVenue extends TLAbsInputBotInlineMessag
 
     private static final int FLAG_REPLY_MARKUP  = 0x00000004; // 2
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private TLAbsInputGeoPoint geoPoint;
     private String title;
     private String address;
@@ -40,14 +35,6 @@ public class TLInputBotInlineMessageMediaVenue extends TLAbsInputBotInlineMessag
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public void setGeoPoint(TLAbsInputGeoPoint geoPoint) {

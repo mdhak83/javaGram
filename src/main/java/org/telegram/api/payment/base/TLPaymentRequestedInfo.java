@@ -19,7 +19,6 @@ public class TLPaymentRequestedInfo extends TLObject {
     private static final int FLAG_EMIAL                  = 0x00000004; // 2
     private static final int FLAG_SHIPPING_ADDRESS       = 0x00000008; // 3
 
-    private int flags;
     private String name;
     private String phone;
     private String email;

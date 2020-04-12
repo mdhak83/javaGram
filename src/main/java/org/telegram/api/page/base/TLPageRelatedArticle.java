@@ -23,11 +23,6 @@ public class TLPageRelatedArticle extends TLObject {
     private static final int FLAG_PHOTO_ID          = 0x00000004; // 2
     private static final int FLAG_AUTHOR            = 0x00000008; // 3: 
     private static final int FLAG_PUBLISHED_DATE    = 0x00000010; // 4 
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * URL of article
@@ -73,14 +68,6 @@ public class TLPageRelatedArticle extends TLObject {
         return CLASS_ID;
     }
     
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
     public String getUrl() {
         return url;
     }

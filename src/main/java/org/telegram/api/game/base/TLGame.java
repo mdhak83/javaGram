@@ -19,7 +19,6 @@ public class TLGame extends TLObject {
 
     private static final int FLAG_DOCUMENT    = 0x00000001; // 0
 
-    private int flags;
     private long id;
     private long accessHash;
     private String shortName;

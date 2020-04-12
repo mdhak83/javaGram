@@ -36,7 +36,6 @@ public class TLUpdateBotInlineQuery extends TLAbsUpdate {
 
     private static final int FLAG_GEOPOINT = 0x00000001; // 0
 
-    private int flags;
     private long queryId;
     private int userId;
     private String query;
@@ -66,10 +65,6 @@ public class TLUpdateBotInlineQuery extends TLAbsUpdate {
 
     public String getOffset() {
         return offset;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public TLAbsGeoPoint getGeo() {

@@ -26,11 +26,6 @@ public class TLWebPageAttributeTheme extends TLObject {
     private static final int FLAG_SETTINGS  = 0x00000002; // 1
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Theme files
      */
     private TLVector<TLAbsDocument> documents;

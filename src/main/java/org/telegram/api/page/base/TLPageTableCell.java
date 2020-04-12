@@ -27,11 +27,6 @@ public class TLPageTableCell extends TLObject {
     private static final int FLAG_VALIGN_MIDDLE = 0x00000020; // 5 
     private static final int FLAG_VALIGN_BOTTOM = 0x00000040; // 6 
     private static final int FLAG_TEXT          = 0x00000080; // 7 
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * Content

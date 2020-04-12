@@ -16,8 +16,6 @@ public class TLRequestPaymentsClearSavedInfo extends TLMethod<TLBool> {
     private static final int FLAG_CREDENTIALS       = 0x00000001; // 0
     private static final int FLAG_INFO              = 0x00000002; // 1
 
-    private int flags;
-
     public TLRequestPaymentsClearSavedInfo() {
         super();
     }

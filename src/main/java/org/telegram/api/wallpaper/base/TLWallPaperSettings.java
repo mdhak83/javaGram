@@ -25,11 +25,6 @@ public class TLWallPaperSettings extends TLObject {
     private static final int FLAG_ROTATION                  = 0x00000010; // 4 : Clockwise rotation angle of the gradient, in degrees; 0-359. Should be always divisible by 45
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * If set, a PNG pattern is to be combined with the color chosen by the user: the main color of the background in RGB24 format
      */
     private int backgroundColor;
@@ -61,14 +56,6 @@ public class TLWallPaperSettings extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-    
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean isBlur() {

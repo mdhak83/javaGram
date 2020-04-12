@@ -21,7 +21,6 @@ public class TLMessageFwdHeader extends TLObject {
     private static final int FLAG_SAVED_FROM_PEER   = 0x00000010; // 4
     private static final int FLAG_FROM_NAME         = 0x00000020; // 4
 
-    private int flags;
     private int fromId;
     private String fromName;
     private int date;
@@ -70,14 +69,6 @@ public class TLMessageFwdHeader extends TLObject {
 
     public void setChannelPost(int channelPost) {
         this.channelPost = channelPost;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public String getFromName() {

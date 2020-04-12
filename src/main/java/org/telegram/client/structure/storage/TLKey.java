@@ -3,26 +3,11 @@ package org.telegram.client.structure.storage;
 import org.telegram.api._primitives.TLContext;
 import org.telegram.api._primitives.TLObject;
 import org.telegram.api._primitives.TLVector;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.telegram.utils.StreamingUtils;
 
-import static org.telegram.utils.StreamingUtils.readBytes;
-import static org.telegram.utils.StreamingUtils.readInt;
-import static org.telegram.utils.StreamingUtils.readTLBool;
-import static org.telegram.utils.StreamingUtils.readTLVector;
-import static org.telegram.utils.StreamingUtils.writeByteArray;
-import static org.telegram.utils.StreamingUtils.writeInt;
-import static org.telegram.utils.StreamingUtils.writeTLBool;
-import static org.telegram.utils.StreamingUtils.writeTLVector;
-
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 08.11.13
- * Time: 23:33
- */
 @SuppressWarnings("ALL")
 public class TLKey extends TLObject {
 
@@ -86,19 +71,19 @@ public class TLKey extends TLObject {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        writeInt(dcId, stream);
-        writeByteArray(authKey, stream);
-        writeTLBool(isAuthorised, stream);
-        writeTLVector(salts, stream);
-        writeTLVector(oldSessions, stream);
+        StreamingUtils.writeInt(this.dcId, stream);
+        StreamingUtils.writeByteArray(this.authKey, stream);
+        StreamingUtils.writeTLBool(this.isAuthorised, stream);
+        StreamingUtils.writeTLVector(this.salts, stream);
+        StreamingUtils.writeTLVector(this.oldSessions, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        dcId = readInt(stream);
-        authKey = readBytes(256, stream);
-        isAuthorised = readTLBool(stream);
-        salts = readTLVector(stream, context);
-        oldSessions = readTLVector(stream, context);
+        this.dcId = StreamingUtils.readInt(stream);
+        this.authKey = StreamingUtils.readBytes(256, stream);
+        this.isAuthorised = StreamingUtils.readTLBool(stream);
+        this.salts = StreamingUtils.readTLVector(stream, context);
+        this.oldSessions = StreamingUtils.readTLVector(stream, context);
     }
 }

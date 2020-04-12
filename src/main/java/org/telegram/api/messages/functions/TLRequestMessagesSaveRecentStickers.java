@@ -22,7 +22,6 @@ public class TLRequestMessagesSaveRecentStickers extends TLMethod<TLBool> {
 
     private static final int FLAG_ATTACHED = 0x00000001; // 0
 
-    private int flags;
     private TLAbsInputDocument id;
     private boolean unsave;
 

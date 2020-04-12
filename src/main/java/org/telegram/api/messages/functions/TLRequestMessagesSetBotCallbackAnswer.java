@@ -23,7 +23,6 @@ public class TLRequestMessagesSetBotCallbackAnswer extends TLMethod<TLBool> {
     private static final int FLAG_ALERT   = 0x00000002; // 1
     private static final int FLAG_URL     = 0x00000004; // 2
 
-    private int flags;
     private long queryId;
     private String message;
     private String url;
@@ -48,14 +47,6 @@ public class TLRequestMessagesSetBotCallbackAnswer extends TLMethod<TLBool> {
         } else {
             throw new IOException("Incorrect response type. Expected " + TLBool.class.getName() +", got: " + res.getClass().getName());
         }
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public long getQueryId() {

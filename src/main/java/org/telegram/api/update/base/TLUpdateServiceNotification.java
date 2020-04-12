@@ -22,7 +22,6 @@ public class TLUpdateServiceNotification extends TLAbsUpdate {
     private static final int FLAG_POPUP          = 0x00000001; // 0
     private static final int FLAG_INBOX_DATE     = 0x00000002; // 1
 
-    private int flags;
     private int inboxDate;
     private String type;
     private String message;
@@ -36,10 +35,6 @@ public class TLUpdateServiceNotification extends TLAbsUpdate {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public String getType() {

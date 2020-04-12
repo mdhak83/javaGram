@@ -22,11 +22,6 @@ public class TLWallPaperNoFile extends TLAbsWallPaper {
     private static final int FLAG_DARK      = 0x00000010; // 4 : Dark mode
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * Wallpaper settings
      */
     private TLWallPaperSettings settings;
@@ -38,14 +33,6 @@ public class TLWallPaperNoFile extends TLAbsWallPaper {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean isDefault() {

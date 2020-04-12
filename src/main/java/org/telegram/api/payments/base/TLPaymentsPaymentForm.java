@@ -26,7 +26,6 @@ public class TLPaymentsPaymentForm extends TLObject {
     private static final int FLAG_PASSWORD_MISSING       = 0x00000008; // 3
     private static final int FLAG_NATIVE                 = 0x00000010; // 4
 
-    private int flags;
     private int botId;
     private TLInvoice invoice;
     private int providerId;

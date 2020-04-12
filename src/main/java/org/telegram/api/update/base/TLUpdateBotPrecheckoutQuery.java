@@ -31,7 +31,6 @@ public class TLUpdateBotPrecheckoutQuery extends TLAbsUpdate {
     private static final int FLAG_INFO                     = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTION_ID       = 0x00000002; // 1
 
-    private int flags;
     private long queryId;
     private int userId;
     private TLBytes payload;

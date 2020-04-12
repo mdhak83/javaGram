@@ -16,7 +16,6 @@ public class TLRequestMessagesSetBotPrecheckoutResults extends TLMethod<TLBool> 
     private static final int FLAG_ERROR       = 0x00000001; // 0
     private static final int FLAG_SUCCESS     = 0x00000002; // 1
 
-    private int flags;
     private long queryId;
     private String error;
 

@@ -22,7 +22,7 @@ Just add the library to your project with one of these options:
 If you want more information about Telegram API, you can go [here](https://core.telegram.org/api#telegram-api). And [here](https://core.telegram.org/mtproto) you will find extra information about mtproto.
  
 ## Questions or Suggestions
-Feel free to create issues [here](https://github.com/rubenlagus/TelegramApi/issues) as you need
+Feel free to create issues [here](https://github.com/mdhak83/javaGram/issues) as you need
  
 ## Disclaimer
 

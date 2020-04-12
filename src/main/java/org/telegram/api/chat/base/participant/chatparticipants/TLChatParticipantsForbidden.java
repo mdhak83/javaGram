@@ -46,7 +46,6 @@ public class TLChatParticipantsForbidden extends TLAbsChatParticipants {
 
     private static final int FLAG_SELF = 0x00000001; // 0
 
-    private int flags;
     private TLAbsChatParticipant selfParticipant;
 
     public TLChatParticipantsForbidden() {
@@ -56,14 +55,6 @@ public class TLChatParticipantsForbidden extends TLAbsChatParticipants {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLAbsChatParticipant getSelfParticipant() {

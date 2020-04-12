@@ -22,7 +22,6 @@ public class TLInputBotInlineResult extends TLAbsInputBotInlineResult {
     private static final int FLAG_THUMB           = 0x00000010; // 4
     private static final int FLAG_CONTENT         = 0x00000020; // 5
 
-    private int flags;
     private String id;
     private String type;
     private String title;
@@ -39,14 +38,6 @@ public class TLInputBotInlineResult extends TLAbsInputBotInlineResult {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public void setThumb(TLInputWebDocument thumb) {

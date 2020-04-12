@@ -33,10 +33,6 @@ public class TLReplayKeyboardMarkup extends TLAbsReplyMarkup {
         return rows;
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);

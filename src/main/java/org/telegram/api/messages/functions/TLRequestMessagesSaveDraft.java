@@ -24,10 +24,8 @@ public class TLRequestMessagesSaveDraft extends TLMethod<TLBool> {
 
     private static final int FLAG_REPLY_TO_MSG_ID = 0x00000001; // 0
     private static final int FLAG_NO_WEBPAGE      = 0x00000002; // 1
-    private static final int FLAG_UNUSED_2        = 0x00000004; // 2
     private static final int FLAG_ENTITIES        = 0x00000008; // 3
 
-    private int flags;
     private int replyToMsgId;
     private TLAbsInputPeer peer;
     private String message;

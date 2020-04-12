@@ -107,24 +107,6 @@ public class TLRequestUploadGetFile extends TLMethod<TLAbsFile> {
         this.limit = value;
     }
 
-    /**
-     * Gets flags.
-     *
-     * @return the flags
-     */
-    public int getFlags() {
-        return this.flags;
-    }
-
-    /**
-     * Sets flags.
-     *
-     * @param flags the flags
-     */
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);

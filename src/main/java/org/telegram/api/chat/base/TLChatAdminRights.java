@@ -23,8 +23,6 @@ public class TLChatAdminRights extends TLObject {
     private static final int FLAG_PIN_MESSAGES              = 0x00000080; // 7
     private static final int FLAG_ADD_ADMINS                = 0x00000200; // 9
 
-    private int flags;
-
     public TLChatAdminRights() {
         super();
     }
@@ -32,14 +30,6 @@ public class TLChatAdminRights extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     @Override

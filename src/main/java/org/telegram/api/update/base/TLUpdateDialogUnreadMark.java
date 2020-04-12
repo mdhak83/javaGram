@@ -21,11 +21,6 @@ public class TLUpdateDialogUnreadMark extends TLAbsUpdate {
     private static final int FLAG_UNREAD    = 0x00000001; // 0 : Was the chat marked or unmarked as read
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * The dialog
      */
     private TLAbsDialogPeer peer;
@@ -47,14 +42,6 @@ public class TLUpdateDialogUnreadMark extends TLAbsUpdate {
         this.setFlag(FLAG_UNREAD, value);
     }
     
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
     public TLAbsDialogPeer getPeer() {
         return peer;
     }

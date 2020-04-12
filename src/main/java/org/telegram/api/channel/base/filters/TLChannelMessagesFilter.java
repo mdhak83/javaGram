@@ -20,7 +20,6 @@ public class TLChannelMessagesFilter extends TLAbsChannelMessagesFilter {
     public static final int FLAG_IMPORTANT_ONLY          = 0x00000001; // 0
     public static final int FLAG_EXCLUDE_NEW_MESSAGES    = 0x00000002; // 1
 
-    private int flags;
     private TLVector<TLMessageRange> ranges;
 
     public TLChannelMessagesFilter() {
@@ -30,14 +29,6 @@ public class TLChannelMessagesFilter extends TLAbsChannelMessagesFilter {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLVector<TLMessageRange> getRanges() {

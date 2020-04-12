@@ -24,7 +24,6 @@ public class TLRequestMessagesSetInlineGameScore extends TLMethod<TLBool> {
     private static final int FLAG_EDITMESSAGE    = 0x00000001; // 0
     private static final int FLAG_FORCE          = 0x00000002; // 1
 
-    private int flags;
     private TLInputBotInlineMessageId id;
     private TLAbsInputUser userId;
     private int score;
@@ -83,17 +82,17 @@ public class TLRequestMessagesSetInlineGameScore extends TLMethod<TLBool> {
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);
-        StreamingUtils.writeTLObject(id, stream);
-        StreamingUtils.writeTLObject(userId, stream);
-        StreamingUtils.writeInt(score, stream);
+        StreamingUtils.writeTLObject(this.id, stream);
+        StreamingUtils.writeTLObject(this.userId, stream);
+        StreamingUtils.writeInt(this.score, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        flags = StreamingUtils.readInt(stream);
-        id = StreamingUtils.readTLObject(stream, context, TLInputBotInlineMessageId.class);
-        userId = StreamingUtils.readTLObject(stream, context, TLAbsInputUser.class);
-        score = StreamingUtils.readInt(stream);
+        this.flags = StreamingUtils.readInt(stream);
+        this.id = StreamingUtils.readTLObject(stream, context, TLInputBotInlineMessageId.class);
+        this.userId = StreamingUtils.readTLObject(stream, context, TLAbsInputUser.class);
+        this.score = StreamingUtils.readInt(stream);
     }
 
     @Override

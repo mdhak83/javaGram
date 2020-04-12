@@ -21,11 +21,6 @@ public class TLPageBlockVideo extends TLAbsPageBlock {
     private static final int FLAG_AUTOPLAY    = 0x00000001; // 0
     private static final int FLAG_LOOP        = 0x00000002; // 1
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private long videoId;
     private TLPageCaption caption;
 
@@ -36,14 +31,6 @@ public class TLPageBlockVideo extends TLAbsPageBlock {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public void setVideoId(long videoId) {

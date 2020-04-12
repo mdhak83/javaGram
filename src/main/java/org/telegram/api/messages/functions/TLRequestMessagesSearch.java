@@ -195,14 +195,6 @@ public class TLRequestMessagesSearch extends TLMethod<TLAbsMessages> {
         this.limit = value;
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);

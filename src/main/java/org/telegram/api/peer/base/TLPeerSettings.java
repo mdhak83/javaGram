@@ -25,11 +25,6 @@ public class TLPeerSettings extends TLObject {
     private static final int FLAG_NEED_CONTACTS_EXCEPTION   = 0x00000010; // 4 : Whether a special exception for contacts is needed
     private static final int FLAG_REPORT_GEO                = 0x00000020; // 5 : Whether we can report a geogroup is irrelevant for this location
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     public TLPeerSettings() {
         super();
     }

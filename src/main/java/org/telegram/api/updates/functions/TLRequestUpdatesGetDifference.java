@@ -14,7 +14,6 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
 
     private static final int FLAG_PTS_TOTAL_LIMIT    = 0x00000001; // 0
 
-    private int flags;
     private int pts;
     private int ptsTotalLimit;
     private int date;
@@ -38,10 +37,6 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
             return (TLAbsDifference) res;
         throw new IOException("Incorrect response type. Expected " + TLAbsDifference.class.getCanonicalName() +
                 ", got: " + res.getClass().getCanonicalName());
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public int getPts() {

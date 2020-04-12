@@ -19,7 +19,6 @@ public class TLRequestPaymentsValidateRequestedInfo extends TLMethod<TLPaymentsV
 
     private static final int FLAG_SAVE       = 0x00000001; // 0
 
-    private int flags;
     private int msgId;
     private TLPaymentRequestedInfo info;
 

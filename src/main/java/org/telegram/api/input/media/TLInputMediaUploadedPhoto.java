@@ -19,7 +19,6 @@ public class TLInputMediaUploadedPhoto extends TLAbsInputMedia {
     private static final int FLAG_STICKERS = 0x00000001; // 0
     private static final int FLAG_TTL_SECONDS = 0x00000002; // 1
 
-    private int flags;
     private TLAbsInputFile file;
     private TLVector<TLAbsInputDocument> stickers;
     private int ttlSeconds;

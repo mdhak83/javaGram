@@ -38,7 +38,6 @@ public class TLUpdateBotInlineSend extends TLAbsUpdate {
     private static final int FLAG_GEOPOINT = 0x00000001; // 0
     private static final int FLAG_MSG_ID   = 0x00000002; // 1
 
-    private int flags;
     private int userId;
     private String query;
     private TLAbsGeoPoint geo;

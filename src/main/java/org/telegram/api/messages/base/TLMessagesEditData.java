@@ -15,8 +15,6 @@ public class TLMessagesEditData extends TLObject {
 
     private static final int FLAG_CAPTION = 0x00000001; // 0
 
-    private int flags;
-
     public TLMessagesEditData() {
         super();
     }

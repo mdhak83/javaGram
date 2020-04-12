@@ -44,12 +44,7 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
     @Override
     public void build(MyTLAppConfiguration config) {
         super.build(config, TLStorage.class);
-        DataCenterInformation defaultDc = this.config.getDefaultDataCenter(); 
         if (this.getObject().getDcInfos().isEmpty()) {
-            if (defaultDc != null) {
-                ALL_DC.put(defaultDc.id, new TLDcInfo(0, defaultDc.id, defaultDc.productionIpAddress, defaultDc.productionIpPort, 0));
-                //this.setPrimaryDc(defaultDc.id);
-            }
             ALL_DC.values().forEach((dc) -> {
                 this.getObject().getDcInfos().add(dc);
             });

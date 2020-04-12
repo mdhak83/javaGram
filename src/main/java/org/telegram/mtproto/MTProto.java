@@ -239,7 +239,7 @@ public class MTProto {
             Logger.d(this.TAG, "Salt check timeout");
             final int count = this.state.maximumCachedSalts(getUnixTime(mtMessage.getMessageId()));
             if (count < FUTURE_MINIMAL) {
-                Logger.d(this.TAG, "Too fiew actual salts: " + count + ", requesting news");
+                Logger.d(this.TAG, "Too few actual salts: " + count + ", requesting news");
                 this.scheduler.postMessage(new MTGetFutureSalts(FUTURE_REQUEST_COUNT), false, FUTURE_TIMEOUT);
                 this.futureSaltsRequestedTime = System.nanoTime();
             }

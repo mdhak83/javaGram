@@ -20,11 +20,6 @@ public class TLUpdateReadHistoryInbox extends TLAbsUpdate {
     private static final int FLAG_FOLDER_ID = 0x00000001; // 0 : Folder ID
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Folder ID
      */
     private int folderId;
@@ -61,14 +56,6 @@ public class TLUpdateReadHistoryInbox extends TLAbsUpdate {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean hasFolderID() {

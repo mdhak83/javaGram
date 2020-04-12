@@ -5,7 +5,6 @@ import org.telegram.api.message.base.TLAbsMessage;
 import org.telegram.api.user.base.TLAbsUser;
 import org.telegram.utils.StreamingUtils;
 import org.telegram.api._primitives.TLContext;
-import org.telegram.api._primitives.TLVector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

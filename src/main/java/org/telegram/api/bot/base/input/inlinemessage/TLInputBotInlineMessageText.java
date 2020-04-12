@@ -29,10 +29,6 @@ public class TLInputBotInlineMessageText extends TLAbsInputBotInlineMessage {
         super();
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
     public String getMessage() {
         return message;
     }

@@ -21,7 +21,6 @@ public class TLBotResults extends TLObject {
     private static final int FLAG_NEXT_OFFSET = 0x00000002; // 1
     private static final int FLAG_SWITCH_PM   = 0x00000004; // 2
 
-    private int flags;
     private long queryId;
     private String nextOffset;
     private TLInlineBotSwitchPm switchPm;
@@ -48,10 +47,6 @@ public class TLBotResults extends TLObject {
 
     public TLVector<TLAbsBotInlineResult> getResults() {
         return results;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public TLInlineBotSwitchPm getSwitchPm() {

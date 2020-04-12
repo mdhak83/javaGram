@@ -22,7 +22,6 @@ public class TLBotInlineResult extends TLAbsBotInlineResult {
     private static final int FLAG_THUMB           = 0x00000010; // 4
     private static final int FLAG_CONTENT         = 0x00000020; // 5
 
-    private int flags;
     private String id;
     private String type;
     private String title;
@@ -34,14 +33,6 @@ public class TLBotInlineResult extends TLAbsBotInlineResult {
 
     protected TLBotInlineResult() {
         super();
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLWebDocument getThumb() {

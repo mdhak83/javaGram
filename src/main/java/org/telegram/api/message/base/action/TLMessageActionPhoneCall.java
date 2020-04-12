@@ -21,11 +21,6 @@ public class TLMessageActionPhoneCall extends TLAbsMessageAction {
     private static final int FLAG_DISCARD_REASON           = 0x00000001; // 0
     private static final int FLAG_DURATION                 = 0x00000002; // 1
     private static final int FLAG_VIDEO                    = 0x00000004; // 2
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * Call ID
@@ -49,14 +44,6 @@ public class TLMessageActionPhoneCall extends TLAbsMessageAction {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean isVideo() {

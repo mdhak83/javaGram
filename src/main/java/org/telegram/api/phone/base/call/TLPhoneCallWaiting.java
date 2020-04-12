@@ -22,11 +22,6 @@ public class TLPhoneCallWaiting extends TLAbsPhoneCall {
     private static final int FLAG_VIDEO         = 0x00000020; // 5
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Call ID
      */
     private long id;
@@ -68,14 +63,6 @@ public class TLPhoneCallWaiting extends TLAbsPhoneCall {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public long getId() {

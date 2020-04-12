@@ -21,11 +21,6 @@ public class TLUpdateDialogPinned extends TLAbsUpdate {
     private static final int FLAG_FOLDER_ID = 0x00000002; // 1
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * If the dialog is in a folder, the folder ID
      */
     private int folderId;

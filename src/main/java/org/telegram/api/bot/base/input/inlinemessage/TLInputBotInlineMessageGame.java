@@ -19,28 +19,19 @@ public class TLInputBotInlineMessageGame extends TLAbsInputBotInlineMessage {
 
     private static final int FLAG_REPLY_MARKUP  = 0x00000004; // 2
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private TLAbsReplyMarkup replyMarkup;
 
     public TLInputBotInlineMessageGame() {
         super();
     }
 
-    public int getFlags() {
-        return flags;
+    @Override
+    public int getClassId() {
+        return CLASS_ID;
     }
 
     public TLAbsReplyMarkup getReplyMarkup() {
         return replyMarkup;
-    }
-
-    @Override
-    public int getClassId() {
-        return CLASS_ID;
     }
 
     @Override

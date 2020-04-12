@@ -21,11 +21,6 @@ public class TLThemeSettings extends TLObject {
     private static final int FLAG_WALLPAPER  = 0x00000002; // 1
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Base theme
      */
     private TLAbsBaseTheme baseTheme;

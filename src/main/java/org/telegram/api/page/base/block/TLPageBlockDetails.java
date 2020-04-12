@@ -22,11 +22,6 @@ public class TLPageBlockDetails extends TLAbsPageBlock {
     private static final int FLAG_OPEN  = 0x00000001; // 0
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
-    /**
      * Block contents
      */
     private TLVector<TLAbsPageBlock> blocks;
@@ -45,14 +40,6 @@ public class TLPageBlockDetails extends TLAbsPageBlock {
         return CLASS_ID;
     }
 
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-    
     public boolean isOpen() {
         return this.isFlagSet(FLAG_OPEN);
     }

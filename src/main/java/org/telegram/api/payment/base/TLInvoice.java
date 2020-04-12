@@ -22,7 +22,6 @@ public class TLInvoice extends TLObject {
     private static final int FLAG_SHIPPING_ADDRESS_REQUESTED   = 0x00000010; // 4
     private static final int FLAG_FLEXIBLE                     = 0x00000020; // 5
 
-    private int flags;
     private String currency;
     private TLVector<TLLabeledPrice> prices;
 

@@ -24,11 +24,6 @@ public class TLPageBlockEmbed extends TLAbsPageBlock {
     private static final int FLAG_POSTER_PHOTO_ID  = 0x00000010; // 4
     private static final int FLAG_SIZE             = 0x00000020; // 5
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-
     private String url;
     private String html;
     private long posterPhotoId;
@@ -43,10 +38,6 @@ public class TLPageBlockEmbed extends TLAbsPageBlock {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public String getUrl() {

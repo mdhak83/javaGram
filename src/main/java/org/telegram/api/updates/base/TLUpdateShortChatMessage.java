@@ -37,7 +37,6 @@ public class TLUpdateShortChatMessage extends TLAbsUpdates {
     private static final int FLAG_UNUSED_12          = 0x00001000; // 12
     private static final int FLAG_SILENT             = 0x00002000; // 13
 
-    private int flags;
     private int id;
     private int fromId;
     private int chatId;
@@ -178,24 +177,6 @@ public class TLUpdateShortChatMessage extends TLAbsUpdates {
      */
     public void setPtsCount(int ptsCount) {
         this.ptsCount = ptsCount;
-    }
-
-    /**
-     * Gets flags.
-     *
-     * @return the flags
-     */
-    public int getFlags() {
-        return this.flags;
-    }
-
-    /**
-     * Sets flags.
-     *
-     * @param flags the flags
-     */
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLMessageFwdHeader getFwdFrom() {

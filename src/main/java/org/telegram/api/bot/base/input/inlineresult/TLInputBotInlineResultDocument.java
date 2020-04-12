@@ -25,7 +25,6 @@ public class TLInputBotInlineResultDocument extends TLAbsInputBotInlineResult {
     private static final int FLAG_UNUSED6         = 0x00000040; // 6
     private static final int FLAG_UNUSED7         = 0x00000080; // 7
 
-    private int flags;
     private String id;
     private String type;
     private String title;
@@ -56,10 +55,6 @@ public class TLInputBotInlineResultDocument extends TLAbsInputBotInlineResult {
 
     public String getDescription() {
         return description;
-    }
-
-    public int getFlags() {
-        return flags;
     }
 
     public TLAbsInputDocument getDocument() {

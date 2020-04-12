@@ -26,7 +26,6 @@ public class TLChatInvite extends TLAbsChatInvite {
     private static final int FLAG_MEGAGROUP    = 0x00000008; // 3
     private static final int FLAG_PARTICIPANTS = 0x00000010; // 4
 
-    private int flags;
     private String title; ///< Title of the chat
     private TLAbsPhoto photo;
     private int participantsCount;

@@ -22,11 +22,6 @@ public class TLMessagesSearchCounter extends TLObject {
     private static final int FLAG_INEXACT   = 0x00000002; // 1 : If set, the results may be inexact
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Provided message filter
      */
     private TLAbsMessagesFilter filter;
@@ -45,14 +40,6 @@ public class TLMessagesSearchCounter extends TLObject {
         return CLASS_ID;
     }
     
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
-
     public boolean isInexact() {
         return this.isFlagSet(FLAG_INEXACT);
     }

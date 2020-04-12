@@ -33,11 +33,6 @@ public class TLChannelAdminLogEventsFilter extends TLObject {
     private static final int FLAG_EDIT      = 0x00001000; // 12 : @see <a href="https://core.telegram.org/constructor/channelAdminLogEventActionEditMessage">Message edit events</a>
     private static final int FLAG_DELETE    = 0x00002000; // 13 : @see <a href="https://core.telegram.org/constructor/channelAdminLogEventActionDeleteMessage">Message deletion events</a>
 
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
     public TLChannelAdminLogEventsFilter() {
         super();
     }
@@ -45,14 +40,6 @@ public class TLChannelAdminLogEventsFilter extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     @Override

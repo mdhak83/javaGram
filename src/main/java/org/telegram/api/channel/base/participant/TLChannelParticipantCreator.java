@@ -17,11 +17,6 @@ public class TLChannelParticipantCreator extends TLAbsChannelParticipant {
     public static final int CLASS_ID = 0x808d15a4;
 
     private static final int FLAG_RANK         = 0x00000001; // 0
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     /**
      * User ID
@@ -48,14 +43,6 @@ public class TLChannelParticipantCreator extends TLAbsChannelParticipant {
 
     public void setUserId(int userId) {
         this.userId = userId;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public String getRank() {

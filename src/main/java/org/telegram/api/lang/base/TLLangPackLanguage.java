@@ -23,11 +23,6 @@ public class TLLangPackLanguage extends TLAbsLangPackString {
     private static final int FLAG_BETA              = 0x00000008; // 3 : Is this a beta localization pack?
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Language name
      */
     private String name;
@@ -77,14 +72,6 @@ public class TLLangPackLanguage extends TLAbsLangPackString {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public String getName() {

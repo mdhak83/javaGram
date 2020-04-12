@@ -26,11 +26,6 @@ public class TLInputMediaUploadedDocument extends TLAbsInputMedia {
     private static final int FLAG_NOSOUND_VIDEO     = 0x00000008; // 3 : Whether the specified document is a video file with no audio tracks (a GIF animation (even as MPEG4), for example)
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * The @see <a href="https://core.telegram.org/api/files">uploaded file</a>
      */
     private TLAbsInputFile file;

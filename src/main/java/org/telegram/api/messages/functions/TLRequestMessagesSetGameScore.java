@@ -24,7 +24,6 @@ public class TLRequestMessagesSetGameScore extends TLMethod<TLAbsUpdates> {
     private static final int FLAG_EDITMESSAGE    = 0x00000001; // 0
     private static final int FLAG_FORCE          = 0x00000002; // 1
 
-    private int flags;
     private TLAbsInputPeer peer;
     private int id;
     private TLAbsInputUser userId;
@@ -93,18 +92,18 @@ public class TLRequestMessagesSetGameScore extends TLMethod<TLAbsUpdates> {
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);
         StreamingUtils.writeTLObject(this.peer, stream);
-        StreamingUtils.writeInt(id, stream);
+        StreamingUtils.writeInt(this.id, stream);
         StreamingUtils.writeTLObject(this.userId, stream);
-        StreamingUtils.writeInt(score, stream);
+        StreamingUtils.writeInt(this.score, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        flags = StreamingUtils.readInt(stream);
-        peer = StreamingUtils.readTLObject(stream, context, TLAbsInputPeer.class);
-        id = StreamingUtils.readInt(stream);
-        userId = StreamingUtils.readTLObject(stream, context, TLAbsInputUser.class);
-        score = StreamingUtils.readInt(stream);
+        this.flags = StreamingUtils.readInt(stream);
+        this.peer = StreamingUtils.readTLObject(stream, context, TLAbsInputPeer.class);
+        this.id = StreamingUtils.readInt(stream);
+        this.userId = StreamingUtils.readTLObject(stream, context, TLAbsInputUser.class);
+        this.score = StreamingUtils.readInt(stream);
     }
 
     @Override

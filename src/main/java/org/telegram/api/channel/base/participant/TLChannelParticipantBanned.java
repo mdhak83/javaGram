@@ -18,11 +18,6 @@ public class TLChannelParticipantBanned extends TLAbsChannelParticipant {
     public static final int CLASS_ID = 0x1c0facaf;
 
     private static final int FLAG_LEFT  = 0x00000001; // 0
-
-    /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
     
     private int userId;
     private int kickedBy;
@@ -52,14 +47,6 @@ public class TLChannelParticipantBanned extends TLAbsChannelParticipant {
 
     public void setBannedRights(TLChatBannedRights bannedRights) {
         this.bannedRights = bannedRights;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public int getUserId() {

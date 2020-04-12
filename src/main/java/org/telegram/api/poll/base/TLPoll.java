@@ -21,7 +21,6 @@ public class TLPoll extends TLObject {
     private static final int FLAG_QUIZ              = 0x00000008; // 3
 
     private long id;
-    private int flags;
     private String question;
     private TLVector<TLPollAnswer> answers;
 
@@ -40,14 +39,6 @@ public class TLPoll extends TLObject {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public String getQuestion() {

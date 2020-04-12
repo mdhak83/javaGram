@@ -20,7 +20,6 @@ public class TLRequestPaymentsSendPaymentForm extends TLMethod<TLAbsPaymentsPaym
     private static final int FLAG_INFO             = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTION  = 0x00000002; // 1
 
-    private int flags;
     private int msgId;
     private String requestedInfo;
     private String shippingOptionId;

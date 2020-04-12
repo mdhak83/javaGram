@@ -38,7 +38,6 @@ public class TLUpdateBotCallbackQuery extends TLAbsUpdate {
     private static final int FLAG_DATA    = 0x00000001; // 0
     private static final int FLAG_GAMEID  = 0x00000002; // 1
 
-    private int flags;
     private long queryId;
     private int userId;
     private TLAbsPeer peer;

@@ -8,7 +8,6 @@ import org.telegram.api._primitives.TLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.telegram.api._primitives.TLVector;
 
 /**
  * Channel messages
@@ -25,11 +24,6 @@ public class TLChannelMessages extends TLAbsMessages {
     private static final int FLAG_INEXACT   = 0x00000001; // 0
     
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * @see <a href="https://core.telegram.org/api/updates">Event count after generation</a>
      */
     private int pts;
@@ -38,21 +32,6 @@ public class TLChannelMessages extends TLAbsMessages {
      * Total number of results were found server-side (may not be all included here)
      */
     private int count;
-
-    /**
-     * List of messages
-     */
-    private TLVector<TLAbsMessage> messages;
-    
-    /**
-     * List of chats mentioned in dialogs
-     */
-    private TLVector<TLAbsChat> chats;
-    
-    /**
-     * List of users mentioned in messages and chats
-     */
-    private TLVector<TLAbsUser> users;
 
     public TLChannelMessages() {
         super();
@@ -69,60 +48,6 @@ public class TLChannelMessages extends TLAbsMessages {
      */
     public boolean isInexact() {
         return this.isFlagSet(FLAG_INEXACT);
-    }
-
-    /**
-     * Gets messages.
-     *
-     * @return the messages
-     */
-    public TLVector<TLAbsMessage> getMessages() {
-        return this.messages;
-    }
-
-    /**
-     * Sets messages.
-     *
-     * @param value the value
-     */
-    public void setMessages(TLVector<TLAbsMessage> value) {
-        this.messages = value;
-    }
-
-    /**
-     * Gets chats.
-     *
-     * @return the chats
-     */
-    public TLVector<TLAbsChat> getChats() {
-        return this.chats;
-    }
-
-    /**
-     * Sets chats.
-     *
-     * @param value the value
-     */
-    public void setChats(TLVector<TLAbsChat> value) {
-        this.chats = value;
-    }
-
-    /**
-     * Gets users.
-     *
-     * @return the users
-     */
-    public TLVector<TLAbsUser> getUsers() {
-        return this.users;
-    }
-
-    /**
-     * Sets users.
-     *
-     * @param value the value
-     */
-    public void setUsers(TLVector<TLAbsUser> value) {
-        this.users = value;
     }
 
     @Override

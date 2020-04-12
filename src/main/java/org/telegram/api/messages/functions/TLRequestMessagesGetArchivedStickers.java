@@ -21,7 +21,6 @@ public class TLRequestMessagesGetArchivedStickers extends TLMethod<TLMessagesArc
 
     private static final int FLAG_MASKS    = 0x00000001; // 0
 
-    private int flags;
     private long offsetId;
     private int limit;
 
@@ -70,15 +69,15 @@ public class TLRequestMessagesGetArchivedStickers extends TLMethod<TLMessagesArc
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);
-        StreamingUtils.writeLong(offsetId, stream);
-        StreamingUtils.writeInt(limit, stream);
+        StreamingUtils.writeLong(this.offsetId, stream);
+        StreamingUtils.writeInt(this.limit, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        flags = StreamingUtils.readInt(stream);
-        offsetId = StreamingUtils.readLong(stream);
-        limit = StreamingUtils.readInt(stream);
+        this.flags = StreamingUtils.readInt(stream);
+        this.offsetId = StreamingUtils.readLong(stream);
+        this.limit = StreamingUtils.readInt(stream);
     }
 
     @Override

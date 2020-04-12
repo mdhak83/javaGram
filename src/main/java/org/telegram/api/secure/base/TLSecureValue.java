@@ -33,11 +33,6 @@ public class TLSecureValue extends TLObject {
     private static final int FLAG_TRANSLATION       = 0x00000040; // 6 : 
     
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Secure @see <a href="https://core.telegram.org/passport">passport</a> value type
      */
     private TLAbsSecureValueType type;
@@ -89,14 +84,6 @@ public class TLSecureValue extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public TLAbsSecureValueType getType() {

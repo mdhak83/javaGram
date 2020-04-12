@@ -17,7 +17,6 @@ public class TLRequestMessagesSetBotShippingResults extends TLMethod<TLBool> {
     private static final int FLAG_ERROR              = 0x00000001; // 0
     private static final int FLAG_SHIPPING_OPTIONS   = 0x00000002; // 1
 
-    private int flags;
     private long queryId;
     private String error;
     private TLVector<TLShippingOption> shippingOptions;

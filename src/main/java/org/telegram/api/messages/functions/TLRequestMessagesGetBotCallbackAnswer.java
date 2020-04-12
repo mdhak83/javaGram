@@ -24,7 +24,6 @@ public class TLRequestMessagesGetBotCallbackAnswer extends TLMethod<TLMessagesBo
     private static final int FLAG_DATA            = 0x00000001; // 0
     private static final int FLAG_GAME          = 0x00000002; // 1
 
-    private int flags;
     private TLAbsInputPeer peer;
     private int msgId;
     private TLBytes data;

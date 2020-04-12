@@ -21,8 +21,6 @@ public class TLRequestMessagesClearRecentStickers extends TLMethod<TLBool> {
 
     private static final int FLAG_ATTACHED = 0x00000001; // 0
 
-    private int flags;
-
     public TLRequestMessagesClearRecentStickers() {
         super();
     }

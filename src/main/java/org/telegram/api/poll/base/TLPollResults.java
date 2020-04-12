@@ -24,11 +24,6 @@ public class TLPollResults extends TLObject {
     private static final int FLAG_TOTAL_VOTERS  = 0x00000004; // 2 : Total number of people that voted in the poll
 
     /**
-     * Flags, @see <a href="https://core.telegram.org/mtproto/TL-combinators#conditional-fields">TL conditional fields</a>
-     */
-    private int flags;
-    
-    /**
      * Poll results
      */
     private TLVector<TLPollAnswerVoters> results;
@@ -45,14 +40,6 @@ public class TLPollResults extends TLObject {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public int getFlags() {
-        return flags;
-    }
-
-    public void setFlags(int flags) {
-        this.flags = flags;
     }
 
     public boolean isMin() {

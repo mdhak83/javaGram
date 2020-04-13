@@ -31,7 +31,6 @@ public class MyTLAppConfiguration {
         protected String systemLangCode = null;
         protected String langPack = null;
         protected String langCode = null;
-        protected DataCenterInformation defaultDataCenter = null;
         protected String authFilename = null;
         protected boolean bot = false;
         protected String botToken = null;
@@ -66,7 +65,6 @@ public class MyTLAppConfiguration {
                     this.systemLangCode,
                     this.langPack,
                     this.langCode,
-                    this.defaultDataCenter,
                     this.authFilename,
                     this.bot,
                     this.botToken,
@@ -127,9 +125,6 @@ public class MyTLAppConfiguration {
             }
             if (this.langCode == null || this.langCode.trim().isEmpty()) {
                 this.langCode = "en";
-            }
-            if (this.defaultDataCenter == null) {
-                this.defaultDataCenter = new DataCenterInformation("2;149.154.167.50:443;149.154.167.40:443");
             }
             if (this.authFilename == null || this.authFilename.trim().isEmpty()) {
                 this.authFilename = "tl-" + this.phoneNumber + ".auth";
@@ -214,11 +209,6 @@ public class MyTLAppConfiguration {
 
         public Builder setLangCode(String langCode) {
             this.langCode = langCode;
-            return this;
-        }
-
-        public Builder setDefaultDataCenter(DataCenterInformation defaultDataCenter) {
-            this.defaultDataCenter = defaultDataCenter;
             return this;
         }
 
@@ -365,11 +355,6 @@ public class MyTLAppConfiguration {
     private final String langCode;
     
     /**
-     * The app default Data Center
-     */
-    private final DataCenterInformation defaultDataCenter;
-    
-    /**
      * 
      */
     private final String authFilename;
@@ -471,7 +456,6 @@ public class MyTLAppConfiguration {
             String systemLangCode,
             String langPack,
             String langCode,
-            DataCenterInformation defaultDataCenter,
             String authFilename,
             boolean bot,
             String botToken,
@@ -500,7 +484,6 @@ public class MyTLAppConfiguration {
         this.systemLangCode = systemLangCode;
         this.langPack = langPack;
         this.langCode = langCode;
-        this.defaultDataCenter = defaultDataCenter;
         this.authFilename = authFilename;
         this.bot = bot;
         this.botToken = botToken;
@@ -564,10 +547,6 @@ public class MyTLAppConfiguration {
 
     public String getLangCode() {
         return langCode;
-    }
-
-    public DataCenterInformation getDefaultDataCenter() {
-        return defaultDataCenter;
     }
 
     public String getAuthFilename() {

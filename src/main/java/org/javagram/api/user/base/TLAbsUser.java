@@ -52,7 +52,7 @@ public abstract class TLAbsUser extends TLObject {
             ret = (n1 != null ? n1 : "---") + "/";
             ret += (n2 != null ? n2 : "---") + "/";
             ret += (n3 != null ? n3 : "---");
-            ret += " (User;" + u.id + ")";
+            ret += " (#" + String.format("%08x", u.id) + ")";
         }
         return ret;
     }

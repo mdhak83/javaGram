@@ -41,7 +41,7 @@ public abstract class AbstractDatabaseManager {
     private static final String LOGTAG = "[AbstractUpdatesHandler]";
     protected static final Map<Integer, TLAbsChat> CHATS = new LinkedHashMap<>();
     protected static final Map<Integer, TLMessagesChatFull> FULL_CHATS = new LinkedHashMap<>();
-    protected static final Map<Integer, TLAbsUser> USERS = new LinkedHashMap<>();
+    protected static final Map<Integer, TLUser> USERS = new LinkedHashMap<>();
     protected static final Map<Integer, TLUserFull> FULL_USERS = new LinkedHashMap<>();
 
     private static int MaxTemporalUsers = 4000;
@@ -328,7 +328,7 @@ public abstract class AbstractDatabaseManager {
     /*
      * 
      */
-    public TLAbsUser getUserById(int uid) {
+    public TLUser getUserById(int uid) {
         synchronized(this.usersLock) {
             return USERS.get(uid);
         }

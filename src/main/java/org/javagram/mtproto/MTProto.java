@@ -346,7 +346,7 @@ public class MTProto {
                     log += ", ";
                 }
                 log += ackMsgId;
-                int id = this.scheduler.mapSchedullerId(ackMsgId);
+                int id = this.scheduler.mapSchedulerId(ackMsgId);
                 if (id > 0) {
                     this.callback.onConfirmed(id);
                 }
@@ -357,7 +357,7 @@ public class MTProto {
 
             Logger.d(this.logtag, "rpc_result: " + result.getMessageId());
 
-            int id = this.scheduler.mapSchedullerId(result.getMessageId());
+            int id = this.scheduler.mapSchedulerId(result.getMessageId());
             if (id > 0) {
                 int responseConstructor = readInt(result.getContent());
                 if (responseConstructor == MTRpcError.CLASS_ID) {
@@ -460,7 +460,7 @@ public class MTProto {
             if (this.receivedMessages.contains(detailedInfo.getAnswerMsgId())) {
                 this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
             } else {
-                int id = this.scheduler.mapSchedullerId(detailedInfo.getMsgId());
+                int id = this.scheduler.mapSchedulerId(detailedInfo.getMsgId());
                 if (id > 0) {
                     this.scheduler.postMessage(new MTNeedResendMessage(new long[]{detailedInfo.getAnswerMsgId()}), false, RESEND_TIMEOUT);
                 } else {

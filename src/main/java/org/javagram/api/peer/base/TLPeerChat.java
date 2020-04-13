@@ -5,9 +5,6 @@ import org.javagram.api._primitives.TLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.javagram.api.chat.base.TLAbsChat;
-import org.javagram.api.user.base.TLAbsUser;
-import org.javagram.client.handlers.AbstractUpdatesHandler;
 
 /**
  * Group.
@@ -32,6 +29,11 @@ public class TLPeerChat extends TLAbsPeer {
     @Override
     public int getClassId() {
         return CLASS_ID;
+    }
+
+    @Override
+    public int getId() {
+        return chatId;
     }
 
     public int getChatId() {

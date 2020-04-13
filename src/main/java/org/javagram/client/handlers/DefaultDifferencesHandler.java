@@ -30,7 +30,7 @@ import org.javagram.utils.RpcException;
 
 public class DefaultDifferencesHandler {
     
-    private static final String LOGTAG = "DIFFERENCESHANDLER";
+    private static final String LOGTAG = "[DefaultDifferencesHandler]";
 
     private final Object differencesLock = new Object();
     private MyTLAppConfiguration config;

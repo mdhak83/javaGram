@@ -5,8 +5,6 @@ import org.javagram.api._primitives.TLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.javagram.api.user.base.TLAbsUser;
-import org.javagram.client.handlers.AbstractUpdatesHandler;
 
 /**
  * Chat partner
@@ -33,8 +31,12 @@ public class TLPeerUser extends TLAbsPeer {
         return CLASS_ID;
     }
 
+    public int getId() {
+        return this.userId;
+    }
+
     public int getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public void setUserId(int userId) {

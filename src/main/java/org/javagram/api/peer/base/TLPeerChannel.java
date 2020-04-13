@@ -5,8 +5,6 @@ import org.javagram.api._primitives.TLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.javagram.api.chat.base.TLAbsChat;
-import org.javagram.client.handlers.AbstractUpdatesHandler;
 
 /**
  * Channel/supergroup
@@ -31,6 +29,11 @@ public class TLPeerChannel extends TLAbsPeer {
     @Override
     public int getClassId() {
         return CLASS_ID;
+    }
+
+    @Override
+    public int getId() {
+        return channelId;
     }
 
     public int getChannelId() {

@@ -36,6 +36,11 @@ public class TLInputPeerUser extends TLAbsInputPeer {
         return CLASS_ID;
     }
 
+    @Override
+    public int getId() {
+        return this.userId;
+    }
+
     public int getUserId() {
         return this.userId;
     }

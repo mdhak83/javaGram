@@ -36,6 +36,11 @@ public class TLInputPeerChannel extends TLAbsInputPeer {
         return CLASS_ID;
     }
 
+    @Override
+    public int getId() {
+        return this.channelId;
+    }
+
     public int getChannelId() {
         return this.channelId;
     }

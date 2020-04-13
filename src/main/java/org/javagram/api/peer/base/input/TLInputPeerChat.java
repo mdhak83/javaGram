@@ -32,6 +32,11 @@ public class TLInputPeerChat extends TLAbsInputPeer {
         return CLASS_ID;
     }
 
+    @Override
+    public int getId() {
+        return this.chatId;
+    }
+
     public int getChatId() {
         return this.chatId;
     }

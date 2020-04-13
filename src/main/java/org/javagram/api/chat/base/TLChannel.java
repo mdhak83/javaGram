@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import org.javagram.api.chat.base.photo.TLChatPhoto;
-import org.javagram.api.photo.base.TLPhoto;
 import org.javagram.api._primitives.TLVector;
 
 /**

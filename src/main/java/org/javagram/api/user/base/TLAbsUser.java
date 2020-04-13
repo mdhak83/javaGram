@@ -24,9 +24,7 @@ public abstract class TLAbsUser extends TLObject {
     }
     
     public void setAccessHash(Long value) {
-        if (this.accessHash == null || this.accessHash == 0L) {
-            this.accessHash = null;
-        }
+        this.accessHash = value;
     }
     
     public boolean isBot() {

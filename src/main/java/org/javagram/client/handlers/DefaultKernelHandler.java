@@ -106,8 +106,8 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             }
 
             if (correctSeq) {
-                this.config.getChatsHandler().onChats(tlUpdates.getChats());
-                this.config.getUsersHandler().onUsers(tlUpdates.getUsers());
+                this.config.getChatsHandler().onChats(tlUpdates.getChats(), false);
+                this.config.getUsersHandler().onUsers(tlUpdates.getUsers(), false);
                 tlUpdates.getUpdates().forEach(x -> {
                     final UpdateWrapper wrapper = new UpdateWrapper(x);
                     wrapper.setParams(x.getPts(), x.getPtsCount(), tlUpdates.getDate(), tlUpdates.getSeq(), 0);
@@ -129,8 +129,8 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             }
 
             if (correctSeq) {
-                this.config.getChatsHandler().onChats(updatesCombined.getChats());
-                this.config.getUsersHandler().onUsers(updatesCombined.getUsers());
+                this.config.getChatsHandler().onChats(updatesCombined.getChats(), false);
+                this.config.getUsersHandler().onUsers(updatesCombined.getUsers(), false);
                 updatesCombined.getUpdates().forEach(x -> {
                     final UpdateWrapper wrapper = new UpdateWrapper(x);
                     wrapper.setParams(x.getPts(), x.getPtsCount(), updatesCombined.getDate(), updatesCombined.getSeq(), updatesCombined.getSeqStart());

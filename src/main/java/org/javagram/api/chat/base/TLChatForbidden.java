@@ -38,6 +38,11 @@ public class TLChatForbidden extends TLAbsChat {
     }
 
     @Override
+    public Long getAccessHash() {
+        return null;
+    }
+
+    @Override
     public String getTitle() {
         return this.title;
     }

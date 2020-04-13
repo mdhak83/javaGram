@@ -83,6 +83,11 @@ public class TLChat extends TLAbsChat {
         return false;
     }
 
+    @Override
+    public Long getAccessHash() {
+        return null;
+    }
+
     public boolean isCreator() {
         return this.isFlagSet(FLAG_CREATOR);
     }

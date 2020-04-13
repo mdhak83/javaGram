@@ -21,16 +21,12 @@ public abstract class TLAbsChat extends TLObject {
         this.id = id;
     }
     
-    public Long getAccessHash() {
-        return this.accessHash;
-    }
+    public abstract Long getAccessHash();
     
     public void setAccessHash(Long accessHash) {
-        if ((this.accessHash == null || this.accessHash == 0L) && accessHash != null && accessHash != 0L) {
-            BotLogger.info("CHANNEL", "AccessHash modified from : " + this.toLog());
-            this.accessHash = accessHash;
-            BotLogger.info("CHANNEL", "AccessHash modified to : " + this.toLog());
-        }
+        BotLogger.info("CHANNEL", "AccessHash modified from : " + this.toLog());
+        this.accessHash = accessHash;
+        BotLogger.info("CHANNEL", "AccessHash modified to : " + this.toLog());
     }
     
     public abstract String getTitle();

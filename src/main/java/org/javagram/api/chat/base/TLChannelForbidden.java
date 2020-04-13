@@ -46,6 +46,11 @@ public class TLChannelForbidden extends TLAbsChat {
         return true;
     }
 
+    @Override
+    public Long getAccessHash() {
+        return null;
+    }
+
     public boolean isBroadcast() {
         return this.isFlagSet(FLAG_BROADCAST);
     }

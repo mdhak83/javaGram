@@ -18,7 +18,7 @@ public abstract class AbstractChatsHandler implements IChatsHandler {
     
     @Override
     public final void onChats(List<TLAbsChat> chats) {
-        this.onChats(chats, true);
+        this.onChats(chats, false);
     }
     
     @Override

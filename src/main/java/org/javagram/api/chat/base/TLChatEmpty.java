@@ -33,6 +33,11 @@ public class TLChatEmpty extends TLAbsChat {
     }
 
     @Override
+    public Long getAccessHash() {
+        return null;
+    }
+    
+    @Override
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.id, stream);
     }
@@ -60,5 +65,5 @@ public class TLChatEmpty extends TLAbsChat {
     @Override
     public void setTitle(String title) {
     }
-    
+
 }

@@ -116,18 +116,10 @@ public abstract class AbstractDatabaseManager {
                         try {
                             userFull = this.config.getApi().doRpcCall(getFullUser);
                             ok = true;
+                            FULL_USERS.put(current.getId(), userFull);
                         } catch (Exception ex) {
                             ok = false;
                         }
-                        FULL_USERS.put(current.getId(), userFull);
-                        //++DEBUG
-                        if (!ok) {
-                            TLVector<String> reasons = tlUser.getRestrictionReason();
-                            int k = 0;
-                        } else {
-                            int k = 0;
-                        }
-                        //--DEBUG
                     }
                 } else {
                     if (current != null) {
@@ -163,10 +155,10 @@ public abstract class AbstractDatabaseManager {
                     try {
                         channelFull = this.config.getApi().doRpcCall(getFullChannel);
                         ok = true;
+                        FULL_CHATS.put(current.getId(), channelFull);
                     } catch (Exception ex) {
                         ok = false;
                     }
-                    FULL_CHATS.put(current.getId(), channelFull);
                 } else if (current instanceof TLChat || current instanceof TLChatForbidden) {
                     TLRequestMessagesGetFullChat getFullChat = new TLRequestMessagesGetFullChat();
                     getFullChat.setChatId(current.getId());
@@ -174,10 +166,10 @@ public abstract class AbstractDatabaseManager {
                     try {
                         chatFull = this.config.getApi().doRpcCall(getFullChat);
                         ok = true;
+                        FULL_CHATS.put(current.getId(), chatFull);
                     } catch (Exception ex) {
                         ok = false;
                     }
-                    FULL_CHATS.put(current.getId(), chatFull);
                 }
                 //++DEBUG
                 if (!ok) {

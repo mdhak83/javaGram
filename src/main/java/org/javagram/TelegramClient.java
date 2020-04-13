@@ -30,6 +30,7 @@ public class TelegramClient {
             throw new NullPointerException("The complete configuration must be provided.");
         }
         this.config = configBuilder.build();
+        this.config.getDatabaseManager().build(this.config);
         if (this.config.getDifferenceParametersService() == null) {
             this.config.setDifferenceParametersService(new DifferenceParametersService());
         }

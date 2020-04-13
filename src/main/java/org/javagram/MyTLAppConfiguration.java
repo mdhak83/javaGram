@@ -13,7 +13,6 @@ import org.javagram.client.kernel.AbstractDatabaseManager;
 import org.javagram.client.kernel.DifferenceParametersService;
 import org.javagram.client.kernel.TelegramApi;
 import org.javagram.client.structure.MemoryApiState;
-import org.javagram.client.structure.DataCenterInformation;
 
 public class MyTLAppConfiguration {
     

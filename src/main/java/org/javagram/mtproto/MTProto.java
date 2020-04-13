@@ -96,7 +96,7 @@ public class MTProto {
     private final int desiredConnectionCount;
     private final TcpContextCallback tcpListener;
     private final ConnectionFixerThread connectionFixerThread;
-    private final SchedullerThread schedullerThread;
+    private final SchedulerThread schedulerThread;
     private final ResponseProcessor responseProcessor;
     private final byte[] authKey;
     private final byte[] authKeyId;
@@ -137,8 +137,8 @@ public class MTProto {
         this.session = Entropy.getInstance().generateSeed(8);
         this.tcpListener = new TcpListener();
         this.scheduler = new Scheduler(this, callWrapper);
-        this.schedullerThread = new SchedullerThread();
-        this.config.getExecutor().submit(this.schedullerThread);
+        this.schedulerThread = new SchedulerThread();
+        this.config.getExecutor().submit(this.schedulerThread);
         this.responseProcessor = new ResponseProcessor();
         this.config.getExecutor().submit(this.responseProcessor);
         this.connectionFixerThread = new ConnectionFixerThread();
@@ -181,8 +181,8 @@ public class MTProto {
             if (this.connectionFixerThread != null) {
                 this.connectionFixerThread.interrupt();
             }
-            if (this.schedullerThread != null) {
-                this.schedullerThread.interrupt();
+            if (this.schedulerThread != null) {
+                this.schedulerThread.interrupt();
             }
             if (this.responseProcessor != null) {
                 this.responseProcessor.interrupt();
@@ -650,9 +650,10 @@ public class MTProto {
         return new MTMessage(messageId, mes_seq, message, message.length);
     }
 
-    private class SchedullerThread extends Thread {
-        private SchedullerThread() {
-            setName("Scheduller#" + hashCode());
+    private class SchedulerThread extends Thread {
+        
+        private SchedulerThread() {
+            setName("Scheduler#" + hashCode());
         }
 
         @Override
@@ -661,7 +662,7 @@ public class MTProto {
             PrepareSchedule prepareSchedule = new PrepareSchedule();
             while (!MTProto.this.isClosed) {
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.logtag, "Scheduller Iteration");
+                    Logger.d(MTProto.this.logtag, "Scheduler Iteration");
                 }
 
                 int[] contextIds;
@@ -674,10 +675,10 @@ public class MTProto {
                 }
 
                 synchronized (MTProto.this.scheduler) {
-                    MTProto.this.scheduler.prepareScheduller(prepareSchedule, contextIds);
+                    MTProto.this.scheduler.prepareScheduler(prepareSchedule, contextIds);
                     if (prepareSchedule.isDoWait()) {
                         if (Logger.LOG_THREADS) {
-                            Logger.d(MTProto.this.logtag, "Scheduller:wait " + prepareSchedule.getDelay());
+                            Logger.d(MTProto.this.logtag, "Scheduler:wait " + prepareSchedule.getDelay());
                         }
                         try {
                             MTProto.this.scheduler.wait(Math.min(prepareSchedule.getDelay(), 30000));
@@ -712,7 +713,7 @@ public class MTProto {
 
                 if (context == null) {
                     if (Logger.LOG_THREADS) {
-                        Logger.d(MTProto.this.logtag, "Scheduller: no context");
+                        Logger.d(MTProto.this.logtag, "Scheduler: no context");
                     }
                     continue;
                 }

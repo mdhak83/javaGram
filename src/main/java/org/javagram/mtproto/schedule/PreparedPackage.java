@@ -1,16 +1,11 @@
 package org.javagram.mtproto.schedule;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 19:59
- */
 public class PreparedPackage {
-    private boolean isHighPriority;
-    private int seqNo;
-    private long messageId;
-    private byte[] content;
+
+    private final boolean isHighPriority;
+    private final int seqNo;
+    private final long messageId;
+    private final byte[] content;
 
     public PreparedPackage(int seqNo, long messageId, byte[] content, boolean isHighPriority) {
         this.seqNo = seqNo;
@@ -34,4 +29,5 @@ public class PreparedPackage {
     public byte[] getContent() {
         return this.content;
     }
+
 }

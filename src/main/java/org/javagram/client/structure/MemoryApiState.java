@@ -38,6 +38,11 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
         ALL_DC.put(6, new TLDcInfo(0, 6, "173.240.5.1", 443, 0));
     }
 
+    private class DcAddress {
+        public final HashMap<Integer, Integer> ports = new HashMap<>();
+        public String host;
+    }
+
     public MemoryApiState() {
     }
     
@@ -236,11 +241,11 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
             }
         }
 
-        for (DcAddress address : mainAddresses.values()) {
+        mainAddresses.values().stream().forEachOrdered(address -> {
             address.ports.put(443, 2);
             address.ports.put(80, 1);
             address.ports.put(25, 0);
-        }
+        });
 
         HashMap<Integer, HashMap<String, DcAddress>> otherAddresses = new HashMap<>();
 
@@ -366,11 +371,6 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
         this.getObject().setAuthorized(false);
         this.getObject().setUid(0);
         this.write();
-    }
-
-    private class DcAddress {
-        public final HashMap<Integer, Integer> ports = new HashMap<>();
-        public String host;
     }
 
     @Override

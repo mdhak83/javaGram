@@ -2,77 +2,62 @@ package org.javagram.mtproto.transport;
 
 import org.javagram.mtproto.log.Logger;
 import org.javagram.mtproto.state.ConnectionInfo;
-
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Random;
 
-/**
- * Created by Ruben Bermudez on 26.11.13.
- */
 public class TransportRate {
 
-    private static final String TAG = "TransportRate";
+    private static final String LOGTAG = "[TransportRate]";
 
-    private HashMap<Integer, Transport> transports = new HashMap<Integer, Transport>();
-
-    private Random rnd = new Random();
+    private final HashMap<Integer, Transport> transports = new HashMap<>();
+    private final Random rnd = new Random();
 
     public TransportRate(ConnectionInfo[] connectionInfos) {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
-        for (int i = 0; i < connectionInfos.length; i++) {
-            min = Math.min(connectionInfos[i].getPriority(), min);
-            max = Math.max(connectionInfos[i].getPriority(), max);
+        for (ConnectionInfo connectionInfo : connectionInfos) {
+            min = Math.min(connectionInfo.getPriority(), min);
+            max = Math.max(connectionInfo.getPriority(), max);
         }
-        for (int i = 0; i < connectionInfos.length; i++) {
-            this.transports.put(connectionInfos[i].getId(),
-                    new Transport(new ConnectionType(connectionInfos[i].getId(), connectionInfos[i].getAddress(), connectionInfos[i].getPort(), ConnectionType.TYPE_TCP),
-                            connectionInfos[i].getPriority() - min + 1));
+        for (ConnectionInfo connectionInfo : connectionInfos) {
+            this.transports.put(connectionInfo.getId(), new Transport(new ConnectionType(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionType.TYPE_TCP), connectionInfo.getPriority() - min + 1));
         }
-        normalize();
+        this.normalize();
     }
 
     public synchronized ConnectionType tryConnection() {
-        float value = this.rnd.nextFloat();
         Transport[] currentTransports = this.transports.values().toArray(new Transport[0]);
-        Arrays.sort(currentTransports, new Comparator<Transport>() {
-            @Override
-            public int compare(Transport transport, Transport transport2) {
-                return -Float.compare(transport.getRate(), transport2.getRate());
-            }
-        });
+        Arrays.sort(currentTransports, (Transport transport, Transport transport2) -> -Float.compare(transport.getRate(), transport2.getRate()));
         ConnectionType type = currentTransports[0].getConnectionType();
-        Logger.d(TAG, "tryConnection #" + type.getId());
+        Logger.d(LOGTAG, "tryConnection #" + type.getId());
         return type;
     }
 
     public synchronized void onConnectionFailure(int id) {
-        Logger.d(TAG, "onConnectionFailure #" + id);
+        Logger.d(LOGTAG, "onConnectionFailure #" + id);
         this.transports.get(id).rate *= 0.5;
-        normalize();
+        this.normalize();
     }
 
     public synchronized void onConnectionSuccess(int id) {
-        Logger.d(TAG, "onConnectionSuccess #" + id);
+        Logger.d(LOGTAG, "onConnectionSuccess #" + id);
         this.transports.get(id).rate *= 1.0;
-        normalize();
+        this.normalize();
     }
 
     private synchronized void normalize() {
         float sum = 0;
-        for (Integer id : this.transports.keySet()) {
-            sum += this.transports.get(id).rate;
-        }
+        sum = this.transports.keySet().stream().map((id) -> this.transports.get(id).rate).reduce(sum, (accumulator, _item) -> accumulator + _item);
         for (Integer id : this.transports.keySet()) {
             Transport transport = this.transports.get(id);
             transport.rate /= sum;
-            Logger.d(TAG, "Transport: #" + transport.connectionType.getId() + " " + transport.connectionType.getHost() + ":" + transport.getConnectionType().getPort() + " #" + transport.getRate());
+            Logger.d(LOGTAG, "Transport: #" + transport.connectionType.getId() + " " + transport.connectionType.getHost() + ":" + transport.getConnectionType().getPort() + " #" + transport.getRate());
         }
     }
 
     private class Transport {
+        
         private ConnectionType connectionType;
         private float rate;
 
@@ -97,4 +82,5 @@ public class TransportRate {
             this.rate = rate;
         }
     }
+
 }

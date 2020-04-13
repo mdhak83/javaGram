@@ -3,45 +3,44 @@ package org.javagram.mtproto.util;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
-/**
- * Created by Ruben Bermudez on 04.02.14.
- */
 public class BytesCache {
 
-    private static BytesCache instance = new BytesCache("GlobalByteCache");
-    private final int[] SIZES = new int[]{64, 128, 3072, 20 * 1024, 40 * 1024};
-    private final int MAX_SIZE = 40 * 1024;
+    private static final BytesCache INSTANCE = new BytesCache("GlobalByteCache");
+    private final String logtag;
+    private final int[] sizes = new int[]{64, 128, 3072, 20 * 1024, 40 * 1024};
+    private final int maxSize = 40 * 1024;
     private final boolean TRACK_ALLOCATIONS = false;
-    private final String TAG;
-    private HashMap<Integer, HashSet<byte[]>> fastBuffers = new HashMap<Integer, HashSet<byte[]>>();
-    private HashSet<byte[]> mainFilter = new HashSet<byte[]>();
-    private HashSet<byte[]> byteBuffer = new HashSet<byte[]>();
-    private WeakHashMap<byte[], StackTraceElement[]> references = new WeakHashMap<byte[], StackTraceElement[]>();
+    private final Map<Integer, HashSet<byte[]>> fastBuffers = new HashMap<>();
+    private final Set<byte[]> mainFilter = new HashSet<>();
+    private final Set<byte[]> byteBuffer = new HashSet<>();
+    private final Map<byte[], StackTraceElement[]> references = new WeakHashMap<>();
 
     public BytesCache(String logTag) {
-        this.TAG = logTag;
-        for (int i = 0; i < this.SIZES.length; i++) {
-            this.fastBuffers.put(this.SIZES[i], new HashSet<byte[]>());
+        this.logtag = logTag;
+        for (int i = 0; i < this.sizes.length; i++) {
+            this.fastBuffers.put(this.sizes[i], new HashSet<>());
         }
     }
 
     public static BytesCache getInstance() {
-        return instance;
+        return INSTANCE;
     }
 
     public synchronized void put(byte[] data) {
         this.references.remove(data);
 
         if (this.mainFilter.add(data)) {
-            for (Integer i : this.SIZES) {
+            for (Integer i : this.sizes) {
                 if (data.length == i) {
                     this.fastBuffers.get(i).add(data);
                     return;
                 }
             }
-            if (data.length <= this.MAX_SIZE) {
+            if (data.length <= this.maxSize) {
                 return;
             }
             this.byteBuffer.add(data);
@@ -49,11 +48,11 @@ public class BytesCache {
     }
 
     public synchronized byte[] allocate(int minSize) {
-        if (minSize <= this.MAX_SIZE) {
-            for (int i = 0; i < this.SIZES.length; i++) {
-                if (minSize < this.SIZES[i]) {
-                    if (!this.fastBuffers.get(this.SIZES[i]).isEmpty()) {
-                        Iterator<byte[]> interator = this.fastBuffers.get(this.SIZES[i]).iterator();
+        if (minSize <= this.maxSize) {
+            for (int i = 0; i < this.sizes.length; i++) {
+                if (minSize < this.sizes[i]) {
+                    if (!this.fastBuffers.get(this.sizes[i]).isEmpty()) {
+                        Iterator<byte[]> interator = this.fastBuffers.get(this.sizes[i]).iterator();
                         byte[] res = interator.next();
                         interator.remove();
 
@@ -66,7 +65,7 @@ public class BytesCache {
                         return res;
                     }
 
-                    return new byte[this.SIZES[i]];
+                    return new byte[this.sizes[i]];
                 }
             }
         } else {
@@ -94,4 +93,5 @@ public class BytesCache {
 
         return new byte[minSize];
     }
+
 }

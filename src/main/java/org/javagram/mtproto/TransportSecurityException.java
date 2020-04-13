@@ -2,13 +2,8 @@ package org.javagram.mtproto;
 
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 6:44
- */
 public class TransportSecurityException extends IOException {
+
     public TransportSecurityException() {
     }
 
@@ -23,4 +18,5 @@ public class TransportSecurityException extends IOException {
     public TransportSecurityException(Throwable throwable) {
         super(throwable);
     }
+
 }

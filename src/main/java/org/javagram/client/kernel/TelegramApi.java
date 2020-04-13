@@ -48,31 +48,25 @@ import org.javagram.utils.RpcCallback;
 import org.javagram.utils.RpcCallbackEx;
 import org.javagram.utils.RpcException;
 import org.javagram.utils.TimeoutException;
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 04.11.13
- * Time: 21:54
- */
 public class TelegramApi {
 
     private static final AtomicInteger CURRENT_INSTANCES_NUMBER = new AtomicInteger(1000);
     private final int instanceNumber;
     private final String logtag;
     
-    private static final AtomicInteger rpcCallIndex = new AtomicInteger(0);
+    private static final AtomicInteger RPC_CALL_INDEX = new AtomicInteger(0);
 
     private static final int CHANNELS_MAIN = 1;
     private static final int CHANNELS_FS = 2;
     private static final int DEFAULT_TIMEOUT_CHECK = 15000;
     private static final int DEFAULT_TIMEOUT = 15000;
     private static final int FILE_TIMEOUT = 45000;
-    private final HashMap<Integer, MTProto> dcProtos = new HashMap<>();
-    private final HashMap<Integer, Object> dcSync = new HashMap<>();
-    private final HashMap<Integer, RpcCallbackWrapper> callbacks = new HashMap<>();
-    private final HashMap<Integer, Integer> sentRequests = new HashMap<>();
-    private final TreeMap<Long, Integer> timeoutTimes = new TreeMap<>();
+    private final Map<Integer, MTProto> dcProtos = new HashMap<>();
+    private final Map<Integer, Object> dcSync = new HashMap<>();
     private final TreeMap<Integer, Boolean> dcRequired = new TreeMap<>();
+    private final Map<Integer, RpcCallbackWrapper> callbacks = new HashMap<>();
+    private final Map<Integer, Integer> sentRequests = new HashMap<>();
+    private final TreeMap<Long, Integer> timeoutTimes = new TreeMap<>();
     private static final int DEFAULTCOMPETABLETIMEOUTMILLIS = 30000;
     private boolean isClosed;
     private int primaryDc;
@@ -216,7 +210,7 @@ public class TelegramApi {
             Logger.d(this.logtag, "<< update " + object.toString());
             this.apiCallback.onUpdate((TLAbsUpdates) object);
         } else {
-            Logger.d(this.logtag, "<< unknown object " + object.toString());
+            Logger.d(this.logtag, "<< unknown object " + (object != null ? object.toString() : "null"));
         }
     }
 
@@ -251,8 +245,10 @@ public class TelegramApi {
         if (this.mainProto != null) {
             this.mainProto.resetNetworkBackoff();
         }
-        for (MTProto mtProto : this.dcProtos.values()) {
-            mtProto.resetNetworkBackoff();
+        synchronized(this.dcProtos) {
+            this.dcProtos.values().forEach((mtProto) -> {
+                mtProto.resetNetworkBackoff();
+            });
         }
     }
 
@@ -282,7 +278,7 @@ public class TelegramApi {
             }
             return;
         }
-        int localRpcId = rpcCallIndex.getAndIncrement();
+        int localRpcId = RPC_CALL_INDEX.getAndIncrement();
         synchronized(this.callbacks) {
             RpcCallbackWrapper wrapper = new RpcCallbackWrapper(localRpcId, method, callback);
             wrapper.dcId = destDc;
@@ -414,6 +410,7 @@ public class TelegramApi {
      * @param method the method
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCall(TLMethod<T> method) throws IOException, java.util.concurrent.TimeoutException {
         return doRpcCall(method, DEFAULTCOMPETABLETIMEOUTMILLIS);
@@ -427,6 +424,7 @@ public class TelegramApi {
      * @param timeout the timeout
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCall(TLMethod<T> method, int timeout) throws IOException, java.util.concurrent.TimeoutException {
         return doRpcCall(method, timeout, 0);
@@ -439,6 +437,7 @@ public class TelegramApi {
      * @param method the method
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallSide(TLMethod<T> method) throws IOException, java.util.concurrent.TimeoutException {
         return doRpcCall(method, DEFAULTCOMPETABLETIMEOUTMILLIS, this.primaryDc, true);
@@ -452,6 +451,7 @@ public class TelegramApi {
      * @param timeout the timeout
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallSide(TLMethod<T> method, int timeout) throws IOException, java.util.concurrent.TimeoutException {
         return doRpcCall(method, timeout, this.primaryDc, true);
@@ -465,9 +465,10 @@ public class TelegramApi {
      * @param timeout the timeout
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallSideGzip(TLMethod<T> method, int timeout) throws IOException, java.util.concurrent.TimeoutException {
-        return doRpcCall(new GzipRequest<T>(method), timeout, this.primaryDc, true);
+        return doRpcCall(new GzipRequest<>(method), timeout, this.primaryDc, true);
     }
 
     /**
@@ -478,9 +479,10 @@ public class TelegramApi {
      * @param timeout the timeout
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallGzip(TLMethod<T> method, int timeout) throws IOException, java.util.concurrent.TimeoutException {
-        return doRpcCall(new GzipRequest<T>(method), timeout, 0);
+        return doRpcCall(new GzipRequest<>(method), timeout, 0);
     }
 
     /**
@@ -489,7 +491,8 @@ public class TelegramApi {
      * @param <T>    the type parameter
      * @param method the method
      * @return the t
-     * @throws IOException the iO exception
+     * @throws org.javagram.utils.RpcException
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallNonAuth(TLMethod<T> method) throws RpcException, java.util.concurrent.TimeoutException {
         return doRpcCallNonAuth(method, DEFAULTCOMPETABLETIMEOUTMILLIS, this.primaryDc);
@@ -503,6 +506,7 @@ public class TelegramApi {
      * @param dcId   the dc id
      * @return the t
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallNonAuth(TLMethod<T> method, int dcId) throws IOException, java.util.concurrent.TimeoutException {
         return doRpcCallNonAuth(method, DEFAULTCOMPETABLETIMEOUTMILLIS, dcId);
@@ -516,7 +520,8 @@ public class TelegramApi {
      * @param timeout the timeout
      * @param dcId    the dc id
      * @return the t
-     * @throws IOException the iO exception
+     * @throws org.javagram.utils.RpcException
+     * @throws java.util.concurrent.TimeoutException
      */
     public <T extends TLObject> T doRpcCallNonAuth(TLMethod<T> method, int timeout, int dcId) throws RpcException, java.util.concurrent.TimeoutException {
         return doRpcCall(method, timeout, dcId, false);
@@ -542,6 +547,7 @@ public class TelegramApi {
      * @param _bytes    the _ bytes
      * @return the boolean
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public boolean doSaveFilePart(long _fileId, int _filePart, byte[] _bytes) throws IOException, java.util.concurrent.TimeoutException {
         final TLRequestUploadSaveFilePart tlRequestUploadSaveFilePart = new TLRequestUploadSaveFilePart();
@@ -561,6 +567,7 @@ public class TelegramApi {
      * @param _bytes      the _ bytes
      * @return the boolean
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public boolean doSaveBigFilePart(long _fileId, int _filePart, int _totalParts, byte[] _bytes) throws IOException, java.util.concurrent.TimeoutException {
         final TLRequestUploadSaveBigFilePart tlRequestUploadSaveBigFilePart = new TLRequestUploadSaveBigFilePart();
@@ -581,6 +588,7 @@ public class TelegramApi {
      * @param _limit    the _ limit
      * @return the tL file
      * @throws IOException the iO exception
+     * @throws java.util.concurrent.TimeoutException
      */
     public TLAbsFile doGetFile(int dcId, TLAbsInputFileLocation _location, int _offset, int _limit) throws IOException, java.util.concurrent.TimeoutException {
         final TLRequestUploadGetFile tlRequestUploadGetFile = new TLRequestUploadGetFile();
@@ -600,17 +608,19 @@ public class TelegramApi {
 
     private void checkDcAuth(int dcId) {
         if (dcId != 0) {
-            synchronized (this.dcProtos) {
-                if (!this.dcProtos.containsKey(dcId)) {
-                    synchronized (this.dcRequired) {
-                        this.dcRequired.put(dcId, true);
-                        this.dcRequired.notifyAll();
-                    }
-                } else if (!this.config.getApiState().isAuthenticated(dcId)) {
-                    synchronized (this.dcRequired) {
-                        this.dcRequired.put(dcId, true);
-                        this.dcRequired.notifyAll();
-                    }
+            boolean contains;
+            synchronized(this.dcProtos) {
+                contains = (this.dcProtos.containsKey(dcId));
+            }
+            if (!contains) {
+                synchronized (this.dcRequired) {
+                    this.dcRequired.put(dcId, true);
+                    this.dcRequired.notifyAll();
+                }
+            } else if (!this.config.getApiState().isAuthenticated(dcId)) {
+                synchronized (this.dcRequired) {
+                    this.dcRequired.put(dcId, true);
+                    this.dcRequired.notifyAll();
                 }
             }
         }
@@ -618,14 +628,16 @@ public class TelegramApi {
 
     private void checkDc(int dcId) {
         if (dcId != 0) {
+            boolean contains;
             synchronized(this.dcProtos) {
-                if (!this.dcProtos.containsKey(dcId)) {
-                    synchronized(this.dcRequired) {
-                        if (!this.dcRequired.containsKey(dcId)) {
-                            this.dcRequired.put(dcId, false);
-                        }
-                        this.dcRequired.notifyAll();
+                contains = (this.dcProtos.containsKey(dcId));
+            }
+            if (!contains) {
+                synchronized(this.dcRequired) {
+                    if (!this.dcRequired.containsKey(dcId)) {
+                        this.dcRequired.put(dcId, false);
                     }
+                    this.dcRequired.notifyAll();
                 }
             }
         } else if (this.mainProto == null) {
@@ -680,10 +692,10 @@ public class TelegramApi {
                 }
 
                 synchronized (TelegramApi.this.dcProtos) {
-                    for (Map.Entry<Integer, MTProto> p : TelegramApi.this.dcProtos.entrySet()) {
+                    TelegramApi.this.dcProtos.entrySet().stream().forEachOrdered(p -> {
                         p.getValue().close();
                         TelegramApi.this.config.getApiState().setAuthenticated(p.getKey(), false);
-                    }
+                    });
                 }
 
                 TelegramApi.this.apiCallback.onAuthCancelled(TelegramApi.this);
@@ -1268,14 +1280,14 @@ public class TelegramApi {
                     Logger.d(TelegramApi.this.logtag, "RPC #" + id + ": Timeout ignored2");
                 }
             }
-            synchronized (TelegramApi.this.timeoutTimes) {
+            synchronized(TelegramApi.this.timeoutTimes) {
                 for (Map.Entry<Long, Integer> entry : TelegramApi.this.timeoutTimes.entrySet()) {
                     RpcCallbackWrapper currentCallback;
                     synchronized (TelegramApi.this.callbacks) {
                         currentCallback = TelegramApi.this.callbacks.remove(entry.getValue());
                     }
                     if (currentCallback != null) {
-                        synchronized (currentCallback) {
+                        synchronized(currentCallback) {
                             if (currentCallback.isCompleted) {
                                 return;
                             } else {

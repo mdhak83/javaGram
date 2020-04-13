@@ -15,7 +15,7 @@ import org.javagram.MyTLAppConfiguration;
 
 public class TLPersistence<T extends TLObject> extends TLContext {
 
-    private static final String LOGTAG = "KernelPersistence";
+    private static final String LOGTAG = "[KernelPersistence]";
 
     private T object;
     private SafeFileWriter writer;

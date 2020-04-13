@@ -1,24 +1,18 @@
 package org.javagram.client.structure;
 
 import org.javagram.api._primitives.TLObject;
-import java.util.Comparator;
 import org.javagram.api.update.base.TLUpdateChannel;
 
-/**
- * @author Ruben Bermudez
- * @version 1.0
- * @brief TODO
- * @date 07 of April of 2016
- */
 public class UpdateWrapper {
-    private TLObject update;
+
+    private final TLObject update;
+    private final int channelId;
     private boolean isChannel;
     private int pts;
     private int ptsCount;
     private int date;
     private int seq;
     private int seqStart;
-    private int channelId;
     private boolean checkPts;
     private boolean updatePts;
     private boolean isGettingDifferences;
@@ -27,12 +21,12 @@ public class UpdateWrapper {
         this.update = update;
         if (update instanceof TLUpdateChannel) {
             isChannel = true;
-            channelId = ((TLUpdateChannel) update).getChannelId();
+            this.channelId = ((TLUpdateChannel) update).getChannelId();
         } else {
-            channelId = 0;
+            this.channelId = 0;
         }
-        checkPts = true;
-        updatePts = true;
+        this.checkPts = true;
+        this.updatePts = true;
     }
 
     public void setParams(int pts, int ptsCount, int date, int seq, int seqStart) {
@@ -48,60 +42,60 @@ public class UpdateWrapper {
     }
 
     public void disableUpdatePts() {
-        updatePts = false;
+        this.updatePts = false;
     }
 
     public void enableGettingDifferences() {
-        isGettingDifferences = true;
+        this.isGettingDifferences = true;
     }
 
     public TLObject getUpdate() {
-        return update;
+        return this.update;
     }
 
     public int getPts() {
-        return pts;
+        return this.pts;
     }
 
     public int getPtsCount() {
-        return ptsCount;
+        return this.ptsCount;
     }
 
     public int getDate() {
-        return date;
+        return this.date;
     }
 
     public int getSeq() {
-        return seq;
+        return this.seq;
     }
 
     public int getSeqStart() {
-        return seqStart;
+        return this.seqStart;
     }
 
     public boolean isCheckPts() {
-        return checkPts;
+        return this.checkPts;
     }
 
     public boolean isUpdatePts() {
-        return updatePts;
+        return this.updatePts;
     }
 
     public boolean isChannel() {
-        return isChannel;
+        return this.isChannel;
     }
 
     public boolean isGettingDifferences() {
-        return isGettingDifferences;
+        return this.isGettingDifferences;
     }
 
     public int getChannelId() {
-        return channelId;
+        return this.channelId;
     }
 
     @Override
     public String toString() {
-        return (update == null) ? null : update.toString();
+        return (this.update == null ? null : this.update.toString());
     }
 
 }

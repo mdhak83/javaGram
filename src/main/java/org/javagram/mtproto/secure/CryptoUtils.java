@@ -2,7 +2,6 @@ package org.javagram.mtproto.secure;
 
 import org.javagram.mtproto.secure.aes.AESImplementation;
 import org.javagram.mtproto.secure.aes.DefaultAESImplementation;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,16 +15,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-/**
- * Author: Korshakov Stepan
- * Created: 18.07.13 3:54
- */
 public class CryptoUtils {
 
     private static final ThreadLocal<MessageDigest> md5 = new ThreadLocal<MessageDigest>() {
@@ -54,10 +48,10 @@ public class CryptoUtils {
         }
     };
 
-    private static AESImplementation currentImplementation = new DefaultAESImplementation();
+    private static AESImplementation CurrentImplementation = new DefaultAESImplementation();
 
     public static void setAESImplementation(AESImplementation implementation) {
-        currentImplementation = implementation;
+        CurrentImplementation = implementation;
     }
 
     public static byte[] RSA(byte[] src, BigInteger key, BigInteger exponent) {
@@ -84,26 +78,26 @@ public class CryptoUtils {
     }
 
     public static void AES256IGEDecryptBig(byte[] src, byte[] dest, int len, byte[] iv, byte[] key) {
-        currentImplementation.AES256IGEDecrypt(src, dest, len, iv, key);
+        CurrentImplementation.AES256IGEDecrypt(src, dest, len, iv, key);
     }
 
     public static byte[] AES256IGEDecrypt(byte[] src, byte[] iv, byte[] key) {
         byte[] res = new byte[src.length];
-        currentImplementation.AES256IGEDecrypt(src, res, src.length, iv, key);
+        CurrentImplementation.AES256IGEDecrypt(src, res, src.length, iv, key);
         return res;
     }
 
     public static void AES256IGEDecrypt(File src, File dest, byte[] iv, byte[] key) throws IOException {
-        currentImplementation.AES256IGEDecrypt(src.getAbsolutePath(), dest.getAbsolutePath(), iv, key);
+        CurrentImplementation.AES256IGEDecrypt(src.getAbsolutePath(), dest.getAbsolutePath(), iv, key);
     }
 
     public static void AES256IGEEncrypt(File src, File dest, byte[] iv, byte[] key) throws IOException {
-        currentImplementation.AES256IGEEncrypt(src.getAbsolutePath(), dest.getAbsolutePath(), iv, key);
+        CurrentImplementation.AES256IGEEncrypt(src.getAbsolutePath(), dest.getAbsolutePath(), iv, key);
     }
 
     public static byte[] AES256IGEEncrypt(byte[] src, byte[] iv, byte[] key) {
         byte[] res = new byte[src.length];
-        currentImplementation.AES256IGEEncrypt(src, res, src.length, iv, key);
+        CurrentImplementation.AES256IGEEncrypt(src, res, src.length, iv, key);
         return res;
     }
 
@@ -179,8 +173,6 @@ public class CryptoUtils {
         byte[] buf = new byte[4 * 1024];
         int len;
         while ((len = in.read(buf)) > 0) {
-            Thread.yield();
-            // out.write(buf, 0, len);
             crypt.update(buf, 0, len);
         }
         in.close();
@@ -190,16 +182,14 @@ public class CryptoUtils {
     public static byte[] SHA1(String fileName) throws IOException {
         MessageDigest crypt = sha1.get();
         crypt.reset();
-        FileInputStream in = new FileInputStream(fileName);
         // Transfer bytes from in to out
-        byte[] buf = new byte[4 * 1024];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            Thread.yield();
-            // out.write(buf, 0, len);
-            crypt.update(buf, 0, len);
+        try (FileInputStream in = new FileInputStream(fileName)) {
+            byte[] buf = new byte[4 * 1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                crypt.update(buf, 0, len);
+            }
         }
-        in.close();
         return crypt.digest();
     }
 
@@ -213,8 +203,8 @@ public class CryptoUtils {
     public static byte[] SHA1(byte[]... src1) {
         MessageDigest crypt = sha1.get();
         crypt.reset();
-        for (int i = 0; i < src1.length; i++) {
-            crypt.update(src1[i]);
+        for (byte[] src11 : src1) {
+            crypt.update(src11);
         }
         return crypt.digest();
     }
@@ -224,22 +214,23 @@ public class CryptoUtils {
             return false;
         }
         for (int i = 0; i < a.length; i++) {
-            if (a[i] != b[i])
+            if (a[i] != b[i]) {
                 return false;
+            }
         }
         return true;
     }
 
     public static byte[] concat(byte[]... v) {
         int len = 0;
-        for (int i = 0; i < v.length; i++) {
-            len += v[i].length;
+        for (byte[] v1 : v) {
+            len += v1.length;
         }
         byte[] res = new byte[len];
         int offset = 0;
-        for (int i = 0; i < v.length; i++) {
-            System.arraycopy(v[i], 0, res, offset, v[i].length);
-            offset += v[i].length;
+        for (byte[] v1 : v) {
+            System.arraycopy(v1, 0, res, offset, v1.length);
+            offset += v1.length;
         }
         return res;
     }
@@ -302,4 +293,5 @@ public class CryptoUtils {
         }
         return true;
     }
+
 }

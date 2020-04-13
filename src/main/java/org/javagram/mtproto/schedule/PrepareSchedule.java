@@ -1,9 +1,7 @@
 package org.javagram.mtproto.schedule;
 
-/**
- * Created by Ruben Bermudez on 29.12.13.
- */
 public class PrepareSchedule {
+
     private long delay;
     private int[] allowedContexts;
     private boolean doWait;
@@ -31,4 +29,5 @@ public class PrepareSchedule {
     public void setAllowedContexts(int[] allowedContexts) {
         this.allowedContexts = allowedContexts;
     }
+
 }

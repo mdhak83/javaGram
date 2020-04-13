@@ -2,13 +2,8 @@ package org.javagram.mtproto;
 
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 6:47
- */
 public class ServerException extends IOException {
+
     public ServerException() {
     }
 
@@ -23,4 +18,5 @@ public class ServerException extends IOException {
     public ServerException(Throwable throwable) {
         super(throwable);
     }
+
 }

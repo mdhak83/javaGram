@@ -5,7 +5,7 @@ import org.javagram.mtproto.backoff.ExponentalBackoff;
 import org.javagram.mtproto.log.Logger;
 import org.javagram.mtproto.schedule.PrepareSchedule;
 import org.javagram.mtproto.schedule.PreparedPackage;
-import org.javagram.mtproto.schedule.Scheduller;
+import org.javagram.mtproto.schedule.Scheduler;
 import org.javagram.mtproto.secure.Entropy;
 import org.javagram.mtproto.state.AbsMTProtoState;
 import org.javagram.mtproto.state.KnownSalt;
@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.javagram.MyTLAppConfiguration;
-import static org.javagram.mtproto.secure.CryptoUtils.*;
+import org.javagram.mtproto.secure.CryptoUtils;
 import org.javagram.mtproto.tl.MTBadMessage;
 import org.javagram.mtproto.tl.MTFutureSalt;
 import org.javagram.mtproto.tl.MTFutureSalts;
@@ -48,26 +48,20 @@ import org.javagram.mtproto.tl.MTPong;
 import org.javagram.mtproto.tl.MTProtoContext;
 import org.javagram.mtproto.tl.MTRpcError;
 import org.javagram.mtproto.tl.MTRpcResult;
-import static org.javagram.mtproto.util.TimeUtil.getUnixTime;
+import org.javagram.mtproto.util.TimeUtil;
 import org.javagram.utils.DeserializeException;
-import static org.javagram.utils.StreamingUtils.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 8:14
- */
 public class MTProto {
-    private static final AtomicInteger instanceIndex = new AtomicInteger(1000);
+
+    private static final AtomicInteger INSTANCE_INDEX = new AtomicInteger(1000);
 
     private static final int MESSAGES_CACHE = 3000;
     private static final int MESSAGES_CACHE_MIN = 20;
 
-    private static final int MAX_INTERNAL_FLOOD_WAIT = 10;//10 sec
+    private static final int MAX_INTERNAL_FLOOD_WAIT_SECONDS = 10;
 
     private static final int PING_INTERVAL_REQUEST = 60000;
-    private static final int PING_INTERVAL = 75;//75 secs
+    private static final int PING_INTERVAL_SECONDS = 75;
 
     private static final int ERROR_MSG_ID_TOO_SMALL = 16;
     private static final int ERROR_MSG_ID_TOO_BIG = 17;
@@ -88,13 +82,13 @@ public class MTProto {
     private static final int FUTURE_MINIMAL = 5;
     private static final long FUTURE_TIMEOUT = 30 * 60 * 1000;//30 secs
 
-    private final String TAG;
-    private final int INSTANCE_INDEX;
+    private final String logtag;
+    private final int instanceIndex;
     private final HashSet<TcpContext> contexts = new HashSet<>();
     private final HashMap<Integer, Integer> contextConnectionId = new HashMap<>();
     private final HashSet<Integer> connectedContexts = new HashSet<>();
     private final HashSet<Integer> initedContext = new HashSet<>();
-    private final Scheduller scheduler;
+    private final Scheduler scheduler;
     private final MyTLAppConfiguration config;
     private final ConcurrentLinkedQueue<MTMessage> inQueue = new ConcurrentLinkedQueue<>();
     private final ArrayList<Long> receivedMessages = new ArrayList<>();
@@ -127,22 +121,22 @@ public class MTProto {
     private final ConcurrentLinkedQueue<Long> newSessionsIds = new ConcurrentLinkedQueue<>();
 
     public MTProto(AbsMTProtoState state, MTProtoCallback callback, CallWrapper callWrapper, int connectionsCount, MyTLAppConfiguration config) {
-        this.INSTANCE_INDEX = instanceIndex.incrementAndGet();
-        this.TAG = "MTProto#" + this.INSTANCE_INDEX;
+        this.instanceIndex = INSTANCE_INDEX.incrementAndGet();
+        this.logtag = "MTProto#" + this.instanceIndex;
         this.config = config;
-        this.exponentalBackoff = new ExponentalBackoff(this.TAG + "#BackOff");
+        this.exponentalBackoff = new ExponentalBackoff(this.logtag + "#BackOff");
         this.apiErrorExponentialBackoff = new ApiErrorExponentialBackoff();
         this.state = state;
         this.connectionRate = new TransportRate(state.getAvailableConnections());
         this.callback = callback;
         this.authKey = state.getAuthKey();
-        this.authKeyId = substring(SHA1(this.authKey), 12, 8);
+        this.authKeyId = CryptoUtils.substring(CryptoUtils.SHA1(this.authKey), 12, 8);
         this.protoContext = new MTProtoContext();
         this.protoContext.build(this.config);
         this.desiredConnectionCount = connectionsCount;
         this.session = Entropy.getInstance().generateSeed(8);
         this.tcpListener = new TcpListener();
-        this.scheduler = new Scheduller(this, callWrapper);
+        this.scheduler = new Scheduler(this, callWrapper);
         this.schedullerThread = new SchedullerThread();
         this.config.getExecutor().submit(this.schedullerThread);
         this.responseProcessor = new ResponseProcessor();
@@ -173,12 +167,12 @@ public class MTProto {
     }
 
     public int getInstanceIndex() {
-        return this.INSTANCE_INDEX;
+        return this.instanceIndex;
     }
 
     @Override
     public String toString() {
-        return "mtproto#" + this.INSTANCE_INDEX;
+        return "mtproto#" + this.instanceIndex;
     }
 
     public void close() {
@@ -193,7 +187,7 @@ public class MTProto {
             if (this.responseProcessor != null) {
                 this.responseProcessor.interrupt();
             }
-            closeConnections();
+            this.closeConnections();
         }
     }
 
@@ -203,10 +197,10 @@ public class MTProto {
 
     public void closeConnections() {
         synchronized (this.contexts) {
-            for (TcpContext context : this.contexts) {
+            this.contexts.stream().forEachOrdered(context -> {
                 context.suspendConnection(true);
                 this.scheduler.onConnectionDies(context.getContextId());
-            }
+            });
             this.contexts.clear();
             this.contexts.notifyAll();
         }
@@ -217,19 +211,16 @@ public class MTProto {
             if (this.receivedMessages.contains(messageId)) {
                 return false;
             }
-
             if (this.receivedMessages.size() > MESSAGES_CACHE_MIN) {
-                if (!receivedMessages.stream().anyMatch(x -> messageId > x)) {
+                if (!this.receivedMessages.stream().anyMatch(x -> messageId > x)) {
                     return false;
                 }
             }
-
             while (this.receivedMessages.size() >= (MESSAGES_CACHE - 1)) {
                 this.receivedMessages.remove(0);
             }
             this.receivedMessages.add(messageId);
         }
-
         return true;
     }
 
@@ -238,12 +229,12 @@ public class MTProto {
     }
 
     public int sendRpcMessage(TLMethod request, long timeout, boolean highPriority) {
-        return sendMessage(request, timeout, true, highPriority);
+        return this.sendMessage(request, timeout, true, highPriority);
     }
 
     public int sendMessage(TLObject request, long timeout, boolean isRpc, boolean highPriority) {
         final int id = this.scheduler.postMessage(request, isRpc, timeout, highPriority);
-        Logger.d(this.TAG, "sendMessage #" + id + " " + request.toString());
+        Logger.d(this.logtag, "sendMessage #" + id + " " + request.toString());
         synchronized (this.scheduler) {
             this.scheduler.notifyAll();
         }
@@ -253,10 +244,10 @@ public class MTProto {
 
     private void onMTMessage(MTMessage mtMessage) {
         if ((this.futureSaltsRequestedTime - System.nanoTime()) > (FUTURE_TIMEOUT * 1000L)) {
-            Logger.d(this.TAG, "Salt check timeout");
-            final int count = this.state.maximumCachedSalts(getUnixTime(mtMessage.getMessageId()));
+            Logger.d(this.logtag, "Salt check timeout");
+            final int count = this.state.maximumCachedSalts(TimeUtil.getUnixTime(mtMessage.getMessageId()));
             if (count < FUTURE_MINIMAL) {
-                Logger.d(this.TAG, "Too few actual salts: " + count + ", requesting news");
+                Logger.d(this.logtag, "Too few actual salts: " + count + ", requesting news");
                 this.scheduler.postMessage(new MTGetFutureSalts(FUTURE_REQUEST_COUNT), false, FUTURE_TIMEOUT);
                 this.futureSaltsRequestedTime = System.nanoTime();
             }
@@ -267,18 +258,17 @@ public class MTProto {
         }
         if (!needProcessing(mtMessage.getMessageId())) {
             if (Logger.LOG_IGNORED) {
-                Logger.d(this.TAG, "Ignoring messages #" + mtMessage.getMessageId());
+                Logger.d(this.logtag, "Ignoring messages #" + mtMessage.getMessageId());
             }
             return;
         }
         try {
             final TLObject intMessage = this.protoContext.deserializeMessage(new ByteArrayInputStream(mtMessage.getContent()));
-            onMTProtoMessage(mtMessage.getMessageId(), intMessage);
+            this.onMTProtoMessage(mtMessage.getMessageId(), intMessage);
         } catch (DeserializeException e) {
-            onApiMessage(mtMessage.getContent());
+            this.onApiMessage(mtMessage.getContent());
         } catch (IOException e) {
-            Logger.e(this.TAG, e);
-            // ???
+            Logger.e(this.logtag, e);
         }
     }
 
@@ -287,11 +277,11 @@ public class MTProto {
     }
 
     private void onMTProtoMessage(long msgId, TLObject object) {
-        Logger.d(this.TAG, "MTProtoMessage: " + object.toString());
+        Logger.d(this.logtag, "MTProtoMessage: " + object.toString());
 
         if (object instanceof MTBadMessage) {
             MTBadMessage badMessage = (MTBadMessage) object;
-            Logger.d(this.TAG, "BadMessage: " + badMessage.getErrorCode() + " #" + badMessage.getBadMsgId());
+            Logger.d(this.logtag, "BadMessage: " + badMessage.getErrorCode() + " #" + badMessage.getBadMsgId());
             this.scheduler.confirmMessage(badMessage.getBadMsgId());
             this.scheduler.onMessageConfirmed(badMessage.getBadMsgId());
             long time = this.scheduler.getMessageIdGenerationTime(badMessage.getBadMsgId());
@@ -303,46 +293,48 @@ public class MTProto {
                         TimeOverlord.getInstance().onForcedServerTimeArrived((msgId >> 32) * 1000, delta);
                         if (badMessage.getErrorCode() == ERROR_MSG_ID_TOO_BIG) {
                             this.scheduler.resetMessageId();
-                        }       this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
-                        requestSchedule();
+                        }
+                        this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
+                        this.requestSchedule();
                         break;
                     case ERROR_SEQ_NO_TOO_BIG:
                     case ERROR_SEQ_NO_TOO_SMALL:
                         if (this.scheduler.isMessageFromCurrentGeneration(badMessage.getBadMsgId())) {
-                            Logger.d(this.TAG, "Resetting session");
+                            Logger.d(this.logtag, "Resetting session");
                             this.session = Entropy.getInstance().generateSeed(8);
                             this.scheduler.resetSession();
-                        }   this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
-                        requestSchedule();
+                        }
+                        this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
+                        this.requestSchedule();
                         break;
                     case ERROR_BAD_SERVER_SALT:
                         long salt = badMessage.getNewServerSalt();
                         // Sync time
                         TimeOverlord.getInstance().onMethodExecuted(badMessage.getBadMsgId(), msgId, delta);
                         this.state.badServerSalt(salt);
-                        Logger.d(this.TAG, "Reschedule messages because bad_server_salt #" + badMessage.getBadMsgId());
+                        Logger.d(this.logtag, "Reschedule messages because bad_server_salt #" + badMessage.getBadMsgId());
                         this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
-                        requestSchedule();
+                        this.requestSchedule();
                         break;
                     case ERROR_BAD_CONTAINER:
                     case ERROR_CONTAINER_MSG_ID_INCORRECT:
                         this.scheduler.resendMessage(badMessage.getBadMsgId());
-                        requestSchedule();
+                        this.requestSchedule();
                         break;
                     case ERROR_TOO_OLD:
                         this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
-                        requestSchedule();
+                        this.requestSchedule();
                         break;
                     default:
                         if (Logger.LOG_IGNORED) {
-                            Logger.d(this.TAG, "Ignored BadMsg #" + badMessage.getErrorCode() + " (" + badMessage.getBadMsgId() + ", " + badMessage.getBadMsqSeqno() + ")");
+                            Logger.d(this.logtag, "Ignored BadMsg #" + badMessage.getErrorCode() + " (" + badMessage.getBadMsgId() + ", " + badMessage.getBadMsqSeqno() + ")");
                         }
                         this.scheduler.forgetMessageByMsgId(badMessage.getBadMsgId());
                         break;
                 }
             } else {
                 if (Logger.LOG_IGNORED) {
-                    Logger.d(this.TAG, "Unknown package #" + badMessage.getBadMsgId());
+                    Logger.d(this.logtag, "Unknown package #" + badMessage.getBadMsgId());
                 }
             }
         } else if (object instanceof MTMsgsAck) {
@@ -359,11 +351,11 @@ public class MTProto {
                     this.callback.onConfirmed(id);
                 }
             }
-            Logger.d(this.TAG, "msgs_ack: " + log);
+            Logger.d(this.logtag, "msgs_ack: " + log);
         } else if (object instanceof MTRpcResult) {
             MTRpcResult result = (MTRpcResult) object;
 
-            Logger.d(this.TAG, "rpc_result: " + result.getMessageId());
+            Logger.d(this.logtag, "rpc_result: " + result.getMessageId());
 
             int id = this.scheduler.mapSchedullerId(result.getMessageId());
             if (id > 0) {
@@ -377,10 +369,10 @@ public class MTProto {
                             if (error.getErrorTag().startsWith("FLOOD_WAIT_")) {
                                 // Secs
                                 int delay = Integer.parseInt(error.getErrorTag().substring("FLOOD_WAIT_".length()));
-                                Logger.w(this.TAG, error.getErrorTag());
-                                if (delay <= MAX_INTERNAL_FLOOD_WAIT) {
+                                Logger.w(this.logtag, error.getErrorTag());
+                                if (delay <= MAX_INTERNAL_FLOOD_WAIT_SECONDS) {
                                     this.scheduler.resendAsNewMessageDelayed(result.getMessageId(), delay * 1000);
-                                    requestSchedule();
+                                    this.requestSchedule();
                                     return;
                                 }
                             }
@@ -391,29 +383,29 @@ public class MTProto {
                                     || error.getErrorTag().equals("USER_DEACTIVATED")
                                     || error.getErrorTag().equals("SESSION_REVOKED")
                                     || error.getErrorTag().equals("SESSION_EXPIRED")) {
-                                Logger.e(this.TAG, "Auth key invalidated");
+                                Logger.e(this.logtag, "Auth key invalidated");
                                 this.callback.onAuthInvalidated(this);
-                                close();
+                                this.close();
                                 return;
                             }
                         }
 
                         if (error.getErrorCode() == 500) {
-                            Logger.w(this.TAG, error.getErrorTag());
+                            Logger.w(this.logtag, error.getErrorTag());
                             long delay = this.apiErrorExponentialBackoff.nextBackOffMillis();
                             this.scheduler.resendAsNewMessageDelayed(result.getMessageId(), delay);
-                            requestSchedule();
+                            this.requestSchedule();
                             return;
                         }
 
                         this.callback.onRpcError(id, error.getErrorCode(), error.getMessage(), this);
                         this.scheduler.forgetMessage(id);
                     } catch (IOException e) {
-                        Logger.e(this.TAG, e);
+                        Logger.e(this.logtag, e);
                         return;
                     }
                 } else {
-                    Logger.d(this.TAG, "rpc_result: " + result.getMessageId() + " #" + Integer.toHexString(responseConstructor));
+                    Logger.d(this.logtag, "rpc_result: " + result.getMessageId() + " #" + Integer.toHexString(responseConstructor));
                     this.apiErrorExponentialBackoff.reset();
                     this.callback.onRpcResult(id, result.getContent(), this);
                     BytesCache.getInstance().put(result.getContent());
@@ -421,7 +413,7 @@ public class MTProto {
                 }
             } else {
                 if (Logger.LOG_IGNORED) {
-                    Logger.d(this.TAG, "ignored rpc_result: " + result.getMessageId());
+                    Logger.d(this.logtag, "ignored rpc_result: " + result.getMessageId());
                 }
                 BytesCache.getInstance().put(result.getContent());
             }
@@ -435,7 +427,7 @@ public class MTProto {
         } else if (object instanceof MTPong) {
             final MTPong pong = (MTPong) object;
             if (Logger.LOG_PING) {
-                Logger.d(this.TAG, "pong: " + pong.getPingId());
+                Logger.d(this.logtag, "pong: " + pong.getPingId());
             }
             this.scheduler.onMessageConfirmed(pong.getMessageId());
             this.scheduler.forgetMessageByMsgId(pong.getMessageId());
@@ -464,7 +456,7 @@ public class MTProto {
             }
         } else if (object instanceof MTMessageDetailedInfo) {
             final MTMessageDetailedInfo detailedInfo = (MTMessageDetailedInfo) object;
-            Logger.d(this.TAG, "msg_detailed_info: " + detailedInfo.getMsgId() + ", answer: " + detailedInfo.getAnswerMsgId());
+            Logger.d(this.logtag, "msg_detailed_info: " + detailedInfo.getMsgId() + ", answer: " + detailedInfo.getAnswerMsgId());
             if (this.receivedMessages.contains(detailedInfo.getAnswerMsgId())) {
                 this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
             } else {
@@ -478,7 +470,7 @@ public class MTProto {
             }
         } else if (object instanceof MTNewMessageDetailedInfo) {
             MTNewMessageDetailedInfo detailedInfo = (MTNewMessageDetailedInfo) object;
-            Logger.d(this.TAG, "msg_new_detailed_info: " + detailedInfo.getAnswerMsgId());
+            Logger.d(this.logtag, "msg_new_detailed_info: " + detailedInfo.getAnswerMsgId());
             if (this.receivedMessages.contains(detailedInfo.getAnswerMsgId())) {
                 this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
             } else {
@@ -486,7 +478,7 @@ public class MTProto {
             }
         } else if (object instanceof MTNewSessionCreated) {
             MTNewSessionCreated newSessionCreated = (MTNewSessionCreated) object;
-            if (!newSessionsIds.contains(newSessionCreated.getUniqId())) {
+            if (!this.newSessionsIds.contains(newSessionCreated.getUniqId())) {
                 KnownSalt[] knownSalts = new KnownSalt[1];
                 int validSince = (int) System.currentTimeMillis() / 1000;
                 knownSalts[0] = new KnownSalt(validSince, validSince + 30 * 60, ((MTNewSessionCreated) object).getServerSalt());
@@ -494,10 +486,11 @@ public class MTProto {
             }
             this.scheduler.updateMessageId(((MTNewSessionCreated) object).getFirstMsgId());
             this.callback.onSessionCreated(this);
+            this.newSessionsIds.add(newSessionCreated.getUniqId());
         } else {
             this.scheduler.onMessageConfirmed(msgId);
             if (Logger.LOG_IGNORED) {
-                Logger.w(this.TAG, "Ignored MTProto message " + object.toString());
+                Logger.w(this.logtag, "Ignored MTProto message " + object.toString());
             }
         }
     }
@@ -507,11 +500,9 @@ public class MTProto {
         if (time - this.lastPingTime > PING_INTERVAL_REQUEST) {
             this.lastPingTime = time;
             synchronized (this.contexts) {
-                for (TcpContext context : this.contexts) {
-                    this.scheduler.postMessageDelayed(
-                            new MTPingDelayDisconnect(Entropy.getInstance().generateRandomId(), PING_INTERVAL),
-                            false, PING_INTERVAL_REQUEST, 0, context.getContextId(), false);
-                }
+                this.contexts.forEach((context) -> {
+                    this.scheduler.postMessageDelayed(new MTPingDelayDisconnect(Entropy.getInstance().generateRandomId(), PING_INTERVAL_SECONDS), false, PING_INTERVAL_REQUEST, 0, context.getContextId(), false);
+                });
             }
         }
     }
@@ -525,31 +516,31 @@ public class MTProto {
     private EncryptedMessage encrypt(int seqNo, long messageId, byte[] content) throws IOException {
         long salt = this.state.findActualSalt((int) (TimeOverlord.getInstance().getServerTime() / 1000));
         ByteArrayOutputStream messageBody = new ByteArrayOutputStream();
-        writeLong(salt, messageBody);
-        writeByteArray(this.session, messageBody);
-        writeLong(messageId, messageBody);
-        writeInt(seqNo, messageBody);
-        writeInt(content.length, messageBody);
-        writeByteArray(content, messageBody);
+        StreamingUtils.writeLong(salt, messageBody);
+        StreamingUtils.writeByteArray(this.session, messageBody);
+        StreamingUtils.writeLong(messageId, messageBody);
+        StreamingUtils.writeInt(seqNo, messageBody);
+        StreamingUtils.writeInt(content.length, messageBody);
+        StreamingUtils.writeByteArray(content, messageBody);
 
         byte[] innerData = messageBody.toByteArray();
-        byte[] msgKey = substring(SHA1(innerData), 4, 16);
-        int fastConfirm = readInt(SHA1(innerData)) | (1 << 31);
+        byte[] msgKey = CryptoUtils.substring(CryptoUtils.SHA1(innerData), 4, 16);
+        int fastConfirm = readInt(CryptoUtils.SHA1(innerData)) | (1 << 31);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        writeByteArray(this.authKeyId, out);
-        writeByteArray(msgKey, out);
+        StreamingUtils.writeByteArray(this.authKeyId, out);
+        StreamingUtils.writeByteArray(msgKey, out);
 
-        byte[] sha1_a = SHA1(msgKey, substring(this.authKey, 0, 32));
-        byte[] sha1_b = SHA1(substring(this.authKey, 32, 16), msgKey, substring(this.authKey, 48, 16));
-        byte[] sha1_c = SHA1(substring(this.authKey, 64, 32), msgKey);
-        byte[] sha1_d = SHA1(msgKey, substring(this.authKey, 96, 32));
+        byte[] sha1_a = CryptoUtils.SHA1(msgKey, CryptoUtils.substring(this.authKey, 0, 32));
+        byte[] sha1_b = CryptoUtils.SHA1(CryptoUtils.substring(this.authKey, 32, 16), msgKey, CryptoUtils.substring(this.authKey, 48, 16));
+        byte[] sha1_c = CryptoUtils.SHA1(CryptoUtils.substring(this.authKey, 64, 32), msgKey);
+        byte[] sha1_d = CryptoUtils.SHA1(msgKey, CryptoUtils.substring(this.authKey, 96, 32));
 
-        byte[] aesKey = concat(substring(sha1_a, 0, 8), substring(sha1_b, 8, 12), substring(sha1_c, 4, 12));
-        byte[] aesIv = concat(substring(sha1_a, 8, 12), substring(sha1_b, 0, 8), substring(sha1_c, 16, 4), substring(sha1_d, 0, 8));
+        byte[] aesKey = CryptoUtils.concat(CryptoUtils.substring(sha1_a, 0, 8), CryptoUtils.substring(sha1_b, 8, 12), CryptoUtils.substring(sha1_c, 4, 12));
+        byte[] aesIv = CryptoUtils.concat(CryptoUtils.substring(sha1_a, 8, 12), CryptoUtils.substring(sha1_b, 0, 8), CryptoUtils.substring(sha1_c, 16, 4), CryptoUtils.substring(sha1_d, 0, 8));
 
-        byte[] encoded = AES256IGEEncrypt(align(innerData, 16), aesIv, aesKey);
-        writeByteArray(encoded, out);
+        byte[] encoded = CryptoUtils.AES256IGEEncrypt(CryptoUtils.align(innerData, 16), aesIv, aesKey);
+        StreamingUtils.writeByteArray(encoded, out);
         EncryptedMessage res = new EncryptedMessage();
         res.data = out.toByteArray();
         res.fastConfirm = fastConfirm;
@@ -562,9 +553,9 @@ public class MTProto {
             crypt.reset();
             crypt.update(serverSalt);
             crypt.update(session);
-            crypt.update(longToBytes(msgId));
-            crypt.update(intToBytes(seq));
-            crypt.update(intToBytes(len));
+            crypt.update(StreamingUtils.longToBytes(msgId));
+            crypt.update(StreamingUtils.intToBytes(seq));
+            crypt.update(StreamingUtils.intToBytes(len));
             crypt.update(data, 0, datalen);
             return crypt.digest();
         } catch (NoSuchAlgorithmException e) {
@@ -577,37 +568,37 @@ public class MTProto {
     private MTMessage decrypt(byte[] data, int offset, int len) throws IOException {
         final ByteArrayInputStream stream = new ByteArrayInputStream(data);
         stream.skip(offset);
-        final byte[] msgAuthKey = readBytes(8, stream);
+        final byte[] msgAuthKey = StreamingUtils.readBytes(8, stream);
         for (int i = 0; i < this.authKeyId.length; i++) {
             if (msgAuthKey[i] != this.authKeyId[i]) {
-                Logger.e(this.TAG, "Unsupported msgAuthKey");
+                Logger.e(this.logtag, "Unsupported msgAuthKey");
                 throw new SecurityException();
             }
         }
-        final byte[] msgKey = readBytes(16, stream);
+        final byte[] msgKey = StreamingUtils.readBytes(16, stream);
 
-        final byte[] sha1_a = SHA1(msgKey, substring(this.authKey, 8, 32));
-        final byte[] sha1_b = SHA1(substring(this.authKey, 40, 16), msgKey, substring(this.authKey, 56, 16));
-        final byte[] sha1_c = SHA1(substring(this.authKey, 72, 32), msgKey);
-        final byte[] sha1_d = SHA1(msgKey, substring(this.authKey, 104, 32));
+        final byte[] sha1_a = CryptoUtils.SHA1(msgKey, CryptoUtils.substring(this.authKey, 8, 32));
+        final byte[] sha1_b = CryptoUtils.SHA1(CryptoUtils.substring(this.authKey, 40, 16), msgKey, CryptoUtils.substring(this.authKey, 56, 16));
+        final byte[] sha1_c = CryptoUtils.SHA1(CryptoUtils.substring(this.authKey, 72, 32), msgKey);
+        final byte[] sha1_d = CryptoUtils.SHA1(msgKey, CryptoUtils.substring(this.authKey, 104, 32));
 
-        final byte[] aesKey = concat(substring(sha1_a, 0, 8), substring(sha1_b, 8, 12), substring(sha1_c, 4, 12));
-        final byte[] aesIv = concat(substring(sha1_a, 8, 12), substring(sha1_b, 0, 8), substring(sha1_c, 16, 4), substring(sha1_d, 0, 8));
+        final byte[] aesKey = CryptoUtils.concat(CryptoUtils.substring(sha1_a, 0, 8), CryptoUtils.substring(sha1_b, 8, 12), CryptoUtils.substring(sha1_c, 4, 12));
+        final byte[] aesIv = CryptoUtils.concat(CryptoUtils.substring(sha1_a, 8, 12), CryptoUtils.substring(sha1_b, 0, 8), CryptoUtils.substring(sha1_c, 16, 4), CryptoUtils.substring(sha1_d, 0, 8));
 
         final int totalLen = len - 8 - 16;
         final byte[] encMessage = BytesCache.getInstance().allocate(totalLen);
-        readBytes(encMessage, 0, totalLen, stream);
+        StreamingUtils.readBytes(encMessage, 0, totalLen, stream);
 
         final byte[] rawMessage = BytesCache.getInstance().allocate(totalLen);
         final long decryptStart = System.currentTimeMillis();
-        AES256IGEDecryptBig(encMessage, rawMessage, totalLen, aesIv, aesKey);
-        Logger.d(this.TAG, "Decrypted in " + (System.currentTimeMillis() - decryptStart) + " ms");
+        CryptoUtils.AES256IGEDecryptBig(encMessage, rawMessage, totalLen, aesIv, aesKey);
+        Logger.d(this.logtag, "Decrypted in " + (System.currentTimeMillis() - decryptStart) + " ms");
         BytesCache.getInstance().put(encMessage);
 
         final ByteArrayInputStream bodyStream = new ByteArrayInputStream(rawMessage);
-        final byte[] serverSalt = readBytes(8, bodyStream);
-        final byte[] session = readBytes(8, bodyStream);
-        final long messageId = readLong(bodyStream);
+        final byte[] serverSalt = StreamingUtils.readBytes(8, bodyStream);
+        final byte[] session = StreamingUtils.readBytes(8, bodyStream);
+        final long messageId = StreamingUtils.readLong(bodyStream);
         final int mes_seq = StreamingUtils.readInt(bodyStream);
 
         final int msg_len = StreamingUtils.readInt(bodyStream);
@@ -627,17 +618,17 @@ public class MTProto {
         }
 
         final byte[] message = BytesCache.getInstance().allocate(msg_len);
-        readBytes(message, 0, msg_len, bodyStream);
+        StreamingUtils.readBytes(message, 0, msg_len, bodyStream);
 
         BytesCache.getInstance().put(rawMessage);
 
         final byte[] checkHash = optimizedSHA(serverSalt, session, messageId, mes_seq, msg_len, message, msg_len);
 
-        if (!arrayEq(substring(checkHash, 4, 16), msgKey)) {
+        if (!CryptoUtils.arrayEq(CryptoUtils.substring(checkHash, 4, 16), msgKey)) {
             throw new SecurityException();
         }
 
-        if (!arrayEq(session, this.session)) {
+        if (!CryptoUtils.arrayEq(session, this.session)) {
             return null;
         }
 
@@ -646,12 +637,12 @@ public class MTProto {
             final long serverTime = TimeOverlord.getInstance().getServerTime() / 1000;
 
             if ((serverTime + 30) < time) {
-                Logger.e(this.TAG, "1. Incorrect message (" + messageId + ") time: " + time + " with server time: " + serverTime);
+                Logger.e(this.logtag, "1. Incorrect message (" + messageId + ") time: " + time + " with server time: " + serverTime);
                 // return null;
             }
 
             if (time < (serverTime - 300)) {
-                Logger.e(this.TAG, "2. Incorrect message (" + messageId + ") time: " + time + " with server time: " + serverTime);
+                Logger.e(this.logtag, "2. Incorrect message (" + messageId + ") time: " + time + " with server time: " + serverTime);
                 // return null;
             }
         }
@@ -670,7 +661,7 @@ public class MTProto {
             PrepareSchedule prepareSchedule = new PrepareSchedule();
             while (!MTProto.this.isClosed) {
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.TAG, "Scheduller Iteration");
+                    Logger.d(MTProto.this.logtag, "Scheduller Iteration");
                 }
 
                 int[] contextIds;
@@ -686,12 +677,12 @@ public class MTProto {
                     MTProto.this.scheduler.prepareScheduller(prepareSchedule, contextIds);
                     if (prepareSchedule.isDoWait()) {
                         if (Logger.LOG_THREADS) {
-                            Logger.d(MTProto.this.TAG, "Scheduller:wait " + prepareSchedule.getDelay());
+                            Logger.d(MTProto.this.logtag, "Scheduller:wait " + prepareSchedule.getDelay());
                         }
                         try {
                             MTProto.this.scheduler.wait(Math.min(prepareSchedule.getDelay(), 30000));
                         } catch (InterruptedException e) {
-                            Logger.e(MTProto.this.TAG, e);
+                            Logger.e(MTProto.this.logtag, e);
                             return;
                         }
                         internalSchedule();
@@ -721,13 +712,13 @@ public class MTProto {
 
                 if (context == null) {
                     if (Logger.LOG_THREADS) {
-                        Logger.d(MTProto.this.TAG, "Scheduller: no context");
+                        Logger.d(MTProto.this.logtag, "Scheduller: no context");
                     }
                     continue;
                 }
 
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.TAG, "doSchedule");
+                    Logger.d(MTProto.this.logtag, "doSchedule");
                 }
 
                 internalSchedule();
@@ -735,15 +726,15 @@ public class MTProto {
                     long start = System.currentTimeMillis();
                     PreparedPackage preparedPackage = MTProto.this.scheduler.doSchedule(context.getContextId(), MTProto.this.initedContext.contains(context.getContextId()));
                     if (Logger.LOG_THREADS) {
-                        Logger.d(MTProto.this.TAG, "Schedulled in " + (System.currentTimeMillis() - start) + " ms");
+                        Logger.d(MTProto.this.logtag, "Schedulled in " + (System.currentTimeMillis() - start) + " ms");
                     }
                     if (preparedPackage == null) {
                         continue;
                     }
 
                     if (Logger.LOG_THREADS) {
-                        Logger.d(MTProto.this.TAG, "MessagePushed (#" + context.getContextId() + "): time:" + getUnixTime(preparedPackage.getMessageId()));
-                        Logger.d(MTProto.this.TAG, "MessagePushed (#" + context.getContextId() + "): seqNo:" + preparedPackage.getSeqNo() + ", msgId" + preparedPackage.getMessageId());
+                        Logger.d(MTProto.this.logtag, "MessagePushed (#" + context.getContextId() + "): time:" + TimeUtil.getUnixTime(preparedPackage.getMessageId()));
+                        Logger.d(MTProto.this.logtag, "MessagePushed (#" + context.getContextId() + "): seqNo:" + preparedPackage.getSeqNo() + ", msgId" + preparedPackage.getMessageId());
                     }
 
                     try {
@@ -754,7 +745,7 @@ public class MTProto {
                         context.postMessage(msg.data, preparedPackage.isHighPriority());
                         MTProto.this.initedContext.add(context.getContextId());
                     } catch (IOException e) {
-                        Logger.e(MTProto.this.TAG, e);
+                        Logger.e(MTProto.this.logtag, e);
                     }
                 }
             }
@@ -771,7 +762,7 @@ public class MTProto {
             setPriority(Thread.MIN_PRIORITY);
             while (!MTProto.this.isClosed) {
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.TAG, "Response Iteration");
+                    Logger.d(MTProto.this.logtag, "Response Iteration");
                 }
                 synchronized (MTProto.this.inQueue) {
                     if (MTProto.this.inQueue.isEmpty()) {
@@ -802,7 +793,7 @@ public class MTProto {
             setPriority(Thread.MIN_PRIORITY);
             while (!MTProto.this.isClosed) {
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.TAG, "Connection Fixer Iteration");
+                    Logger.d(MTProto.this.logtag, "Connection Fixer Iteration");
                 }
                 synchronized (MTProto.this.contexts) {
                     if (MTProto.this.contexts.size() >= MTProto.this.desiredConnectionCount) {
@@ -842,7 +833,7 @@ public class MTProto {
             try {
                 MTMessage decrypted = decrypt(data, offset, len);
                 if (decrypted == null) {
-                    Logger.d(MTProto.this.TAG, "message ignored");
+                    Logger.d(MTProto.this.logtag, "message ignored");
                     return;
                 }
                 if (!MTProto.this.connectedContexts.contains(context.getContextId())) {
@@ -851,46 +842,50 @@ public class MTProto {
                     MTProto.this.connectionRate.onConnectionSuccess(MTProto.this.contextConnectionId.get(context.getContextId()));
                 }
 
-                Logger.d(MTProto.this.TAG, "MessageArrived (#" + context.getContextId() + "): time: " + getUnixTime(decrypted.getMessageId()));
-                Logger.d(MTProto.this.TAG, "MessageArrived (#" + context.getContextId() + "): seqNo: " + decrypted.getSeqNo() + ", msgId:" + decrypted.getMessageId());
+                Logger.d(MTProto.this.logtag, "MessageArrived (#" + context.getContextId() + "): time: " + TimeUtil.getUnixTime(decrypted.getMessageId()));
+                Logger.d(MTProto.this.logtag, "MessageArrived (#" + context.getContextId() + "): seqNo: " + decrypted.getSeqNo() + ", msgId:" + decrypted.getMessageId());
                 int messageClass = readInt(decrypted.getContent());
-                if (messageClass == MTMessagesContainer.CLASS_ID) {
-                    try {
-                        TLObject object = MTProto.this.protoContext.deserializeMessage(new ByteArrayInputStream(decrypted.getContent()));
-                        if (object instanceof MTMessagesContainer) {
-                            for (MTMessage mtMessage : ((MTMessagesContainer) object).getMessages()) {
-                                MTProto.this.inQueue.add(mtMessage);
+                switch (messageClass) {
+                    case MTMessagesContainer.CLASS_ID:
+                        try {
+                            TLObject object = MTProto.this.protoContext.deserializeMessage(new ByteArrayInputStream(decrypted.getContent()));
+                            if (object instanceof MTMessagesContainer) {
+                                for (MTMessage mtMessage : ((MTMessagesContainer) object).getMessages()) {
+                                    MTProto.this.inQueue.add(mtMessage);
+                                }
+                                synchronized (MTProto.this.inQueue) {
+                                    MTProto.this.inQueue.notifyAll();
+                                }
                             }
+                            BytesCache.getInstance().put(decrypted.getContent());
+                        } catch (DeserializeException e) {
+                            // Ignore this
+                            Logger.e(MTProto.this.logtag, e);
+                        }
+                        break;
+                    case MTMessageCopy.CLASS_ID:
+                        Logger.d(logtag, "On msg copy");
+                        try {
+                            TLObject object = MTProto.this.protoContext.deserializeMessage(new ByteArrayInputStream(decrypted.getContent()));
+                            MTMessageCopy messageCopy = (MTMessageCopy) object;
+                            MTProto.this.scheduler.confirmMessage(decrypted.getMessageId());
+                            MTProto.this.inQueue.add(messageCopy.getOrig_message());
                             synchronized (MTProto.this.inQueue) {
                                 MTProto.this.inQueue.notifyAll();
                             }
+                        } catch (DeserializeException e) {
+                            Logger.e(MTProto.this.logtag, e);
                         }
-                        BytesCache.getInstance().put(decrypted.getContent());
-                    } catch (DeserializeException e) {
-                        // Ignore this
-                        Logger.e(MTProto.this.TAG, e);
-                    }
-                } else if (messageClass == MTMessageCopy.CLASS_ID) {
-                    Logger.d(TAG, "On msg copy");
-                    try {
-                        TLObject object = MTProto.this.protoContext.deserializeMessage(new ByteArrayInputStream(decrypted.getContent()));
-                        MTMessageCopy messageCopy = (MTMessageCopy) object;
-                        MTProto.this.scheduler.confirmMessage(decrypted.getMessageId());
-                        MTProto.this.inQueue.add(messageCopy.getOrig_message());
+                        break;
+                    default:
+                        MTProto.this.inQueue.add(decrypted);
                         synchronized (MTProto.this.inQueue) {
                             MTProto.this.inQueue.notifyAll();
                         }
-                    } catch (DeserializeException e) {
-                        Logger.e(MTProto.this.TAG, e);
-                    }
-                } else {
-                    MTProto.this.inQueue.add(decrypted);
-                    synchronized (MTProto.this.inQueue) {
-                        MTProto.this.inQueue.notifyAll();
-                    }
+                        break;
                 }
             } catch (IOException e) {
-                Logger.e(MTProto.this.TAG, e);
+                Logger.e(MTProto.this.logtag, e);
                 synchronized (MTProto.this.contexts) {
                     context.suspendConnection(true);
                     if (!MTProto.this.connectedContexts.contains(context.getContextId())) {
@@ -910,7 +905,7 @@ public class MTProto {
                 return;
             }
 
-            Logger.e(MTProto.this.TAG, "OnError (#" + context.getContextId() + "): " + errorCode);
+            Logger.e(MTProto.this.logtag, "OnError (#" + context.getContextId() + "): " + errorCode);
             context.suspendConnection(true);
             context.connect();
             // Fully maintained at transport level: TcpContext dies
@@ -922,7 +917,7 @@ public class MTProto {
                 return;
             }
             int contextId = context.getContextId();
-            Logger.d(MTProto.this.TAG, "onChannelBroken (#" + contextId + ")");
+            Logger.d(MTProto.this.logtag, "onChannelBroken (#" + contextId + ")");
             synchronized (MTProto.this.contexts) {
                 MTProto.this.contexts.remove(context);
                 if (!MTProto.this.connectedContexts.contains(contextId)) {
@@ -954,4 +949,5 @@ public class MTProto {
         public byte[] data;
         public int fastConfirm;
     }
+
 }

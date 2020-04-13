@@ -127,7 +127,7 @@ public class Scheduler {
         return this.postMessageDelayed(object, isApi, timeout, 0, -1, highPrioroty);
     }
 
-    public synchronized void prepareScheduller(PrepareSchedule prepareSchedule, int[] connectionIds) {
+    public synchronized void prepareScheduler(PrepareSchedule prepareSchedule, int[] connectionIds) {
         long time = getCurrentTime();
 
         // Clear packages for unknown channels

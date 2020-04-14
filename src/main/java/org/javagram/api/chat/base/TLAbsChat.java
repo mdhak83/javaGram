@@ -22,6 +22,10 @@ public abstract class TLAbsChat extends TLObject {
     }
     
     public abstract Long getAccessHash();
+
+    public boolean isMin() {
+        return false;
+    }
     
     public void setAccessHash(Long accessHash) {
         BotLogger.info("CHANNEL", "AccessHash modified from : " + this.toLog());

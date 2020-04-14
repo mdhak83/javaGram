@@ -160,6 +160,7 @@ public class TLChannel extends TLAbsChat {
         this.setFlag(FLAG_SIGNATURES, value);
     }
 
+    @Override
     public boolean isMin() {
         return this.isFlagSet(FLAG_MIN);
     }

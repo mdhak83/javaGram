@@ -35,7 +35,6 @@ import org.javagram.api.user.base.input.TLInputUser;
 import org.javagram.api.users.functions.TLRequestUsersGetFullUser;
 import org.javagram.utils.BotLogger;
 import org.javagram.MyTLAppConfiguration;
-import org.javagram.utils.RpcException;
 
 public abstract class AbstractDatabaseManager {
     
@@ -100,16 +99,19 @@ public abstract class AbstractDatabaseManager {
                     Long previousAccessHash = null;
                     if (current == null) {
                         USERS.put(tlUser.getId(), tlUser);
+                        if (!updateAccessHash || tlUser.isMin()) {
+                            tlUser.setAccessHash(null);
+                        }
                         current = tlUser;
                         update = false;
                     } else {
                         previousAccessHash = current.getAccessHash();
                     }
-                    if (updateAccessHash && current instanceof TLUser && current != user && tlUser.getAccessHash() != null && !Objects.equals(current.getAccessHash(), user.getAccessHash())) {
+                    if (!tlUser.isMin() && updateAccessHash && current instanceof TLUser && current != user && tlUser.getAccessHash() != null && !Objects.equals(current.getAccessHash(), user.getAccessHash())) {
                         current.setAccessHash(tlUser.getAccessHash());
                     }
                     TLUserFull userFull = null;
-                    if (!current.isBot() && current.getAccessHash() != null && !FULL_USERS.containsKey(current.getId())) {
+                    if (!current.isMin() && current.getAccessHash() != null && !FULL_USERS.containsKey(current.getId())) {
                         TLRequestUsersGetFullUser getFullUser = new TLRequestUsersGetFullUser();
                         TLInputUser iUser = new TLInputUser();
                         iUser.setUserId(current.getId());
@@ -121,6 +123,7 @@ public abstract class AbstractDatabaseManager {
                             ok = true;
                             FULL_USERS.put(current.getId(), userFull);
                         } catch (Exception ex) {
+                            BotLogger.error(LOGTAG, "RPC ERROR : Restricted: " + current.isRestricted() + " - Scam: " + current.isScam() + " - Deleted: " + current.isDeleted());
                             if (!(ex instanceof TimeoutException)) {
                                 current.setAccessHash(previousAccessHash);
                             }
@@ -152,17 +155,17 @@ public abstract class AbstractDatabaseManager {
             Long previousAccessHash = null;
             if (current == null) {
                 CHATS.put(chat.getId(), chat);
-                if (!updateAccessHash) {
+                if (!updateAccessHash || chat.isMin()) {
                     chat.setAccessHash(null);
                 }
                 current = chat;
             } else {
                 previousAccessHash = current.getAccessHash();
             }
-            if (updateAccessHash && current instanceof TLChannel && current != chat && chat.getAccessHash() != null && !Objects.equals(current.getAccessHash(), chat.getAccessHash())) {
+            if (!chat.isMin() && updateAccessHash && current instanceof TLChannel && current != chat && chat.getAccessHash() != null && !Objects.equals(current.getAccessHash(), chat.getAccessHash())) {
                 current.setAccessHash(chat.getAccessHash());
             }
-            if (current.getAccessHash() != null && !FULL_CHATS.containsKey(current.getId())) {
+            if (!current.isMin() && current.getAccessHash() != null && !FULL_CHATS.containsKey(current.getId())) {
                 boolean ok = false;
                 if (current.getAccessHash() != null && (current instanceof TLChannel)) {
                     TLRequestChannelsGetFullChannel getFullChannel = new TLRequestChannelsGetFullChannel();

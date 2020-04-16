@@ -18,13 +18,8 @@ public abstract class AbstractUsersHandler implements IUsersHandler {
     
     @Override
     public final void onUsers(List<TLAbsUser> users) {
-        this.onUsers(users, true);
-    }
-
-    @Override
-    public final void onUsers(List<TLAbsUser> users, boolean updateAccessHash) {
         users.stream().filter((user) -> (user != null)).forEachOrdered((user) -> {
-            this.config.getDatabaseManager().processUser(user, updateAccessHash);
+            this.config.getDatabaseManager().processUser(user);
         });
         this.onUsersCustom(users);
     }

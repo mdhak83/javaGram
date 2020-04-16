@@ -5,5 +5,4 @@ import org.javagram.api.chat.base.TLAbsChat;
 
 public interface IChatsHandler {
     void onChats(List<TLAbsChat> chats);
-    void onChats(List<TLAbsChat> chats, boolean updateAccessHash);
 }

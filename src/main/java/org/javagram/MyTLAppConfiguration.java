@@ -1,5 +1,10 @@
 package org.javagram;
 
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import org.javagram.client.handlers.AbstractChatsHandler;
 import org.javagram.client.handlers.AbstractMessagesHandler;
@@ -30,6 +35,7 @@ public class MyTLAppConfiguration {
         protected String systemLangCode = null;
         protected String langPack = null;
         protected String langCode = null;
+        protected Path temporaryFolder = null;
         protected String authFilename = null;
         protected boolean bot = false;
         protected String botToken = null;
@@ -64,6 +70,7 @@ public class MyTLAppConfiguration {
                     this.systemLangCode,
                     this.langPack,
                     this.langCode,
+                    this.temporaryFolder,
                     this.authFilename,
                     this.bot,
                     this.botToken,
@@ -124,6 +131,16 @@ public class MyTLAppConfiguration {
             }
             if (this.langCode == null || this.langCode.trim().isEmpty()) {
                 this.langCode = "en";
+            }
+            if (this.temporaryFolder == null || !Files.isDirectory(this.temporaryFolder)) {
+                Path path = Paths.get("javagramTmp");
+                try {
+                    Files.createDirectory(path);
+                } catch(FileAlreadyExistsException e){
+                } catch (IOException e) {
+                    path = null;
+                }
+                this.temporaryFolder = path;
             }
             if (this.authFilename == null || this.authFilename.trim().isEmpty()) {
                 this.authFilename = "tl-" + this.phoneNumber + ".auth";
@@ -208,6 +225,11 @@ public class MyTLAppConfiguration {
 
         public Builder setLangCode(String langCode) {
             this.langCode = langCode;
+            return this;
+        }
+
+        public Builder setTemporaryFolder(Path temporaryFolder) {
+            this.temporaryFolder = temporaryFolder;
             return this;
         }
 
@@ -356,6 +378,11 @@ public class MyTLAppConfiguration {
     /**
      * 
      */
+    private final Path temporaryFolder;
+    
+    /**
+     * 
+     */
     private final String authFilename;
     
     /**
@@ -455,6 +482,7 @@ public class MyTLAppConfiguration {
             String systemLangCode,
             String langPack,
             String langCode,
+            Path temporaryFolder,
             String authFilename,
             boolean bot,
             String botToken,
@@ -483,6 +511,7 @@ public class MyTLAppConfiguration {
         this.systemLangCode = systemLangCode;
         this.langPack = langPack;
         this.langCode = langCode;
+        this.temporaryFolder = temporaryFolder;
         this.authFilename = authFilename;
         this.bot = bot;
         this.botToken = botToken;
@@ -546,6 +575,10 @@ public class MyTLAppConfiguration {
 
     public String getLangCode() {
         return langCode;
+    }
+
+    public Path getTemporaryFolder() {
+        return temporaryFolder;
     }
 
     public String getAuthFilename() {

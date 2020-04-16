@@ -17,16 +17,6 @@ public class TLFileLocationToBeDeprecated extends TLAbsFileLocation {
      */
     public static final int CLASS_ID = 0xbc7fc6cd;
 
-    /**
-     * Volume ID
-     */
-    private long volumeId;
-    
-    /**
-     * Local ID
-     */
-    private int localId;
-
     public TLFileLocationToBeDeprecated() {
         super();
     }
@@ -34,22 +24,6 @@ public class TLFileLocationToBeDeprecated extends TLAbsFileLocation {
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    public long getVolumeId() {
-        return this.volumeId;
-    }
-
-    public void setVolumeId(long volumeId) {
-        this.volumeId = volumeId;
-    }
-
-    public int getLocalId() {
-        return this.localId;
-    }
-
-    public void setLocalId(int localId) {
-        this.localId = localId;
     }
 
     @Override

@@ -18,13 +18,8 @@ public abstract class AbstractChatsHandler implements IChatsHandler {
     
     @Override
     public final void onChats(List<TLAbsChat> chats) {
-        this.onChats(chats, false);
-    }
-    
-    @Override
-    public final void onChats(List<TLAbsChat> chats, boolean updateAccessHash) {
         chats.stream().filter((chat) -> (chat != null)).forEachOrdered((chat) -> {
-            this.config.getDatabaseManager().processChat(chat, updateAccessHash);
+            this.config.getDatabaseManager().processChat(chat);
         });
         this.onChatsCustom(chats);
     }

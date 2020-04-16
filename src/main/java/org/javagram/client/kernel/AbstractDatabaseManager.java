@@ -1,24 +1,15 @@
 package org.javagram.client.kernel;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 import org.javagram.api._primitives.TLObject;
 import org.javagram.api._primitives.TLVector;
-import org.javagram.api.channel.base.input.TLInputChannel;
-import org.javagram.api.channels.functions.TLRequestChannelsGetFullChannel;
 import org.javagram.api.chat.base.TLAbsChat;
-import org.javagram.api.chat.base.TLChannel;
-import org.javagram.api.chat.base.TLChat;
 import org.javagram.api.message.base.TLAbsMessage;
 import org.javagram.api.message.base.TLMessage;
 import org.javagram.api.message.base.TLMessageService;
-import org.javagram.api.messages.base.TLMessagesChatFull;
-import org.javagram.api.messages.functions.TLRequestMessagesGetFullChat;
 import org.javagram.api.notify.base.peer.TLAbsNotifyPeer;
 import org.javagram.api.notify.base.peer.TLNotifyPeer;
 import org.javagram.api.peer.base.TLAbsPeer;
@@ -30,23 +21,19 @@ import org.javagram.api.peer.base.TLPeerUser;
 import org.javagram.api.updates.base.TLUpdateShortMessage;
 import org.javagram.api.user.base.TLAbsUser;
 import org.javagram.api.user.base.TLUser;
-import org.javagram.api.user.base.TLUserFull;
-import org.javagram.api.user.base.input.TLInputUser;
-import org.javagram.api.users.functions.TLRequestUsersGetFullUser;
 import org.javagram.utils.BotLogger;
 import org.javagram.MyTLAppConfiguration;
+import org.javagram.api.chat.base.TLChatEmpty;
 
 public abstract class AbstractDatabaseManager {
     
     private static final String LOGTAG = "[AbstractDatabaseManager]";
     protected static final Map<Integer, TLAbsChat> CHATS = new LinkedHashMap<>();
-    protected static final Map<Integer, TLMessagesChatFull> FULL_CHATS = new LinkedHashMap<>();
     protected static final Map<Integer, TLUser> USERS = new LinkedHashMap<>();
-    protected static final Map<Integer, TLUserFull> FULL_USERS = new LinkedHashMap<>();
 
     private static int MaxTemporalUsers = 4000;
 
-    private MyTLAppConfiguration config;
+    protected MyTLAppConfiguration config;
     
     private final Object usersLock = new Object();
     private final Object chatsLock = new Object();
@@ -59,8 +46,9 @@ public abstract class AbstractDatabaseManager {
     public abstract Map<Integer, int[]> getDifferencesData();
     public abstract boolean updateDifferencesData(int botId, int pts, int date, int seq);
     public abstract void free() throws Throwable;
-    public abstract void onUserAdded(TLUser regular, TLUserFull full);
-    public abstract void onChatAdded(TLAbsChat regular, TLMessagesChatFull full);
+    public abstract void onUserAdded(TLUser regular);
+    public abstract void onUserRemoved(TLUser regular);
+    public abstract void onChatAdded(TLAbsChat regular);
     
     protected AbstractDatabaseManager() {
     }
@@ -82,127 +70,63 @@ public abstract class AbstractDatabaseManager {
                     countRemove--;
                 }
                 remove.forEach((i) -> {
+                    TLUser u = USERS.get(i);
+                    this.onUserRemoved(u);
                     USERS.remove(i);
-                    FULL_USERS.remove(i);
                 });
             }
         }
     }
     
-    public void processUser(TLAbsUser user, boolean updateAccessHash) {
-        synchronized(this.usersLock) {
-            if (user instanceof TLUser) {
-                final TLUser tlUser = (TLUser) user;
-                TLUser current = USERS.get(user.getId());
-                boolean update = true;
-                if (!tlUser.isDeleted()) {
-                    Long previousAccessHash = null;
-                    if (current == null) {
-                        USERS.put(tlUser.getId(), tlUser);
-                        if (!updateAccessHash || tlUser.isMin()) {
-                            tlUser.setAccessHash(null);
+    public void processUser(TLAbsUser user) {
+        if (user != null && user instanceof TLUser) {
+            final TLUser tlUser = (TLUser) user;
+            if (!tlUser.isMin()) {
+                synchronized(this.usersLock) {
+                    TLUser current = USERS.get(user.getId());
+                    boolean update = true;
+                    if (!tlUser.isDeleted()) {
+                        if (current == null) {
+                            USERS.put(tlUser.getId(), tlUser);
+                            current = tlUser;
+                            update = false;
                         }
-                        current = tlUser;
-                        update = false;
-                    } else {
-                        previousAccessHash = current.getAccessHash();
-                    }
-                    if (!tlUser.isMin() && updateAccessHash && current instanceof TLUser && current != user && tlUser.getAccessHash() != null && !Objects.equals(current.getAccessHash(), user.getAccessHash())) {
-                        current.setAccessHash(tlUser.getAccessHash());
-                    }
-                    TLUserFull userFull = null;
-                    if (!current.isMin() && current.getAccessHash() != null && !FULL_USERS.containsKey(current.getId())) {
-                        TLRequestUsersGetFullUser getFullUser = new TLRequestUsersGetFullUser();
-                        TLInputUser iUser = new TLInputUser();
-                        iUser.setUserId(current.getId());
-                        iUser.setAccessHash(current.getAccessHash());
-                        getFullUser.setId(iUser);
-                        boolean ok = false;
-                        try {
-                            userFull = this.config.getApi().doRpcCall(getFullUser);
-                            ok = true;
-                            FULL_USERS.put(current.getId(), userFull);
-                        } catch (Exception ex) {
-                            BotLogger.error(LOGTAG, "RPC ERROR : Restricted: " + current.isRestricted() + " - Scam: " + current.isScam() + " - Deleted: " + current.isDeleted());
-                            if (!(ex instanceof TimeoutException)) {
-                                current.setAccessHash(previousAccessHash);
-                            }
-                            ok = false;
+                        if (!update) {
+                            this.addUser(current);
+                            this.onUserAdded(current);
+                        } else {
+                            this.updateUser(current);
                         }
-                    }
-                    if (!update) {
-                        this.addUser(current);
-                        this.onUserAdded(current, userFull);
                     } else {
-                        this.updateUser(current);
-                    }
-                } else {
-                    if (current != null) {
-                        this.deleteUser(current);
-                        USERS.remove(current.getId(), current);
+                        if (current != null) {
+                            this.deleteUser(current);
+                            USERS.remove(current.getId(), current);
+                        }
                     }
                 }
+                this._removeExcessTemporalUsers();
             }
         }
-        this._removeExcessTemporalUsers();
     }
     
-    public void processChat(TLAbsChat chat, boolean updateAccessHash) {
-        synchronized(this.chatsLock) {
-            TLAbsChat current = CHATS.get(chat.getId());
-            TLMessagesChatFull chatFull = null;
-            boolean update = (current != null);
-            Long previousAccessHash = null;
-            if (current == null) {
-                CHATS.put(chat.getId(), chat);
-                if (!updateAccessHash || chat.isMin()) {
-                    chat.setAccessHash(null);
-                }
-                current = chat;
-            } else {
-                previousAccessHash = current.getAccessHash();
-            }
-            if (!chat.isMin() && updateAccessHash && current instanceof TLChannel && current != chat && chat.getAccessHash() != null && !Objects.equals(current.getAccessHash(), chat.getAccessHash())) {
-                current.setAccessHash(chat.getAccessHash());
-            }
-            if (!current.isMin() && current.getAccessHash() != null && !FULL_CHATS.containsKey(current.getId())) {
-                boolean ok = false;
-                if (current.getAccessHash() != null && (current instanceof TLChannel)) {
-                    TLRequestChannelsGetFullChannel getFullChannel = new TLRequestChannelsGetFullChannel();
-                    TLInputChannel ic = new TLInputChannel();
-                    ic.setChannelId(current.getId());
-                    ic.setAccessHash(current.getAccessHash());
-                    getFullChannel.setChannel(ic);
-                    try {
-                        chatFull = this.config.getApi().doRpcCall(getFullChannel);
-                        ok = true;
-                        FULL_CHATS.put(current.getId(), chatFull);
-                    } catch (IOException | TimeoutException ex) {
-                        if (!(ex instanceof TimeoutException)) {
-                            current.setAccessHash(previousAccessHash);
-                        }
-                        ok = false;
+    public void processChat(TLAbsChat chat) {
+        if (chat != null && !(chat instanceof TLChatEmpty)) {
+            if (!chat.isMin()) {
+                synchronized(this.chatsLock) {
+                    TLAbsChat current = CHATS.get(chat.getId());
+                    boolean update = true;
+                    if (current == null) {
+                        CHATS.put(chat.getId(), chat);
+                        current = chat;
+                        update = false;
                     }
-                } else if (current instanceof TLChat) {
-                    TLRequestMessagesGetFullChat getFullChat = new TLRequestMessagesGetFullChat();
-                    getFullChat.setChatId(current.getId());
-                    try {
-                        chatFull = this.config.getApi().doRpcCall(getFullChat);
-                        ok = true;
-                        FULL_CHATS.put(current.getId(), chatFull);
-                    } catch (Exception ex) {
-                        if (!(ex instanceof TimeoutException)) {
-                            current.setAccessHash(previousAccessHash);
-                        }
-                        ok = false;
+                    if (!update) {
+                        this.addChat(current);
+                        this.onChatAdded(current);
+                    } else {
+                        this.updateChat(current);
                     }
                 }
-            }
-            if (!update) {
-                this.addChat(current);
-                this.onChatAdded(current, chatFull);
-            } else {
-                this.updateChat(current);
             }
         }
     }
@@ -346,18 +270,6 @@ public abstract class AbstractDatabaseManager {
         }
     }
     
-    public TLUserFull getFullUserById(int uid) {
-        synchronized(this.usersLock) {
-            return FULL_USERS.get(uid);
-        }
-    }
-    
-    public TLMessagesChatFull getFullChatById(int cid) {
-        synchronized(this.chatsLock) {
-            return FULL_CHATS.get(cid);
-        }
-    }
-
     public TLAbsChat getChatById(int cid) {
         synchronized(this.chatsLock) {
             return CHATS.get(cid);

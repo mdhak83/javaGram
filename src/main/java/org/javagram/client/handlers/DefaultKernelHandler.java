@@ -20,7 +20,6 @@ import org.javagram.api.updates.base.TLUpdatesTooLong;
 import org.javagram.api.updates.functions.TLRequestUpdatesGetState;
 import org.javagram.MyTLAppConfiguration;
 import org.javagram.utils.RpcException;
-import org.javagram.client.kernel.IKernelComm;
 import org.javagram.client.structure.UpdateWrapper;
 
 public class DefaultKernelHandler implements NotificationsService.NotificationObserver {
@@ -106,8 +105,8 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             }
 
             if (correctSeq) {
-                this.config.getChatsHandler().onChats(tlUpdates.getChats(), false);
-                this.config.getUsersHandler().onUsers(tlUpdates.getUsers(), false);
+                this.config.getChatsHandler().onChats(tlUpdates.getChats());
+                this.config.getUsersHandler().onUsers(tlUpdates.getUsers());
                 tlUpdates.getUpdates().forEach(x -> {
                     final UpdateWrapper wrapper = new UpdateWrapper(x);
                     wrapper.setParams(x.getPts(), x.getPtsCount(), tlUpdates.getDate(), tlUpdates.getSeq(), 0);
@@ -129,8 +128,8 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             }
 
             if (correctSeq) {
-                this.config.getChatsHandler().onChats(updatesCombined.getChats(), false);
-                this.config.getUsersHandler().onUsers(updatesCombined.getUsers(), false);
+                this.config.getChatsHandler().onChats(updatesCombined.getChats());
+                this.config.getUsersHandler().onUsers(updatesCombined.getUsers());
                 updatesCombined.getUpdates().forEach(x -> {
                     final UpdateWrapper wrapper = new UpdateWrapper(x);
                     wrapper.setParams(x.getPts(), x.getPtsCount(), updatesCombined.getDate(), updatesCombined.getSeq(), updatesCombined.getSeqStart());

@@ -5,5 +5,4 @@ import org.javagram.api.user.base.TLAbsUser;
 
 public interface IUsersHandler {
     void onUsers(List<TLAbsUser> users);
-    void onUsers(List<TLAbsUser> users, boolean updateAccessHash);
 }

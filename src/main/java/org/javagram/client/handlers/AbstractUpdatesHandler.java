@@ -423,8 +423,8 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
      */
     @Override
     public final void onTLChannelDifferences(List<TLAbsUser> users, List<TLAbsMessage> messages, List<TLAbsUpdate> newUpdates, List<TLAbsChat> chats) {
-        this.config.getUsersHandler().onUsers(users, false);
-        this.config.getChatsHandler().onChats(chats, false);
+        this.config.getUsersHandler().onUsers(users);
+        this.config.getChatsHandler().onChats(chats);
         this.config.getMessagesHandler().onMessages(messages);
         newUpdates.stream().map(update -> {
             UpdateWrapper updateWrapper = new UpdateWrapper(update);
@@ -442,8 +442,8 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
 
     @Override
     public final void onTLAbsDifference(TLAbsDifference absDifference) {
-        this.config.getUsersHandler().onUsers(absDifference.getUsers(), false);
-        this.config.getChatsHandler().onChats(absDifference.getChats(), false);
+        this.config.getUsersHandler().onUsers(absDifference.getUsers());
+        this.config.getChatsHandler().onChats(absDifference.getChats());
         this.config.getMessagesHandler().onMessages(absDifference.getNewMessages());
         absDifference.getOtherUpdates().stream().map(otherUpdate -> {
             UpdateWrapper updateWrapper = new UpdateWrapper(otherUpdate);

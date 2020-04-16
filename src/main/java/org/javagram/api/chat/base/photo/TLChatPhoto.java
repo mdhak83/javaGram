@@ -17,8 +17,8 @@ public class TLChatPhoto extends TLAbsChatPhoto {
      */
     public static final int CLASS_ID = 0x475cdbd5;
 
-    private TLAbsFileLocation photo_small; ///< Location of the file corresponding to the small thumbnail for group profile photo
-    private TLAbsFileLocation photo_big; ///< Location of the file corresponding to the big thumbnail for group profile photo
+    private TLAbsFileLocation photoSmall; ///< Location of the file corresponding to the small thumbnail for group profile photo
+    private TLAbsFileLocation photoBig; ///< Location of the file corresponding to the big thumbnail for group profile photo
     private int dcId;
 
     public TLChatPhoto() {
@@ -35,17 +35,17 @@ public class TLChatPhoto extends TLAbsChatPhoto {
      *
      * @return the photo _ small
      */
-    public TLAbsFileLocation getPhoto_small() {
-        return this.photo_small;
+    public TLAbsFileLocation getPhotoSmall() {
+        return this.photoSmall;
     }
 
     /**
      * Sets photo _ small.
      *
-     * @param photo_small the photo _ small
+     * @param photoSmall the photo _ small
      */
-    public void setPhoto_small(TLAbsFileLocation photo_small) {
-        this.photo_small = photo_small;
+    public void setPhotoSmall(TLAbsFileLocation photoSmall) {
+        this.photoSmall = photoSmall;
     }
 
     /**
@@ -53,17 +53,17 @@ public class TLChatPhoto extends TLAbsChatPhoto {
      *
      * @return the photo _ big
      */
-    public TLAbsFileLocation getPhoto_big() {
-        return this.photo_big;
+    public TLAbsFileLocation getPhotoBig() {
+        return this.photoBig;
     }
 
     /**
      * Sets photo _ big.
      *
-     * @param photo_big the photo _ big
+     * @param photoBig the photo _ big
      */
-    public void setPhoto_big(TLAbsFileLocation photo_big) {
-        this.photo_big = photo_big;
+    public void setPhotoBig(TLAbsFileLocation photoBig) {
+        this.photoBig = photoBig;
     }
 
     public int getDcId() {
@@ -76,15 +76,15 @@ public class TLChatPhoto extends TLAbsChatPhoto {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        StreamingUtils.writeTLObject(this.photo_small, stream);
-        StreamingUtils.writeTLObject(this.photo_big, stream);
+        StreamingUtils.writeTLObject(this.photoSmall, stream);
+        StreamingUtils.writeTLObject(this.photoBig, stream);
         StreamingUtils.writeInt(this.dcId, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.photo_small = StreamingUtils.readTLObject(stream, context, TLAbsFileLocation.class);
-        this.photo_big = StreamingUtils.readTLObject(stream, context, TLAbsFileLocation.class);
+        this.photoSmall = StreamingUtils.readTLObject(stream, context, TLAbsFileLocation.class);
+        this.photoBig = StreamingUtils.readTLObject(stream, context, TLAbsFileLocation.class);
         this.dcId = StreamingUtils.readInt(stream);
     }
 

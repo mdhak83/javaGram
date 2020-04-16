@@ -17,8 +17,6 @@ public class TLFileLocation extends TLAbsFileLocation {
     public static final int CLASS_ID = 0x53d69076;
 
     private int dcId;
-    private long volumeId;
-    private int localId;
     private long secret;
 
     public TLFileLocation() {
@@ -46,42 +44,6 @@ public class TLFileLocation extends TLAbsFileLocation {
      */
     public void setDcId(int dcId) {
         this.dcId = dcId;
-    }
-
-    /**
-     * Gets volume id.
-     *
-     * @return the volume id
-     */
-    public long getVolumeId() {
-        return this.volumeId;
-    }
-
-    /**
-     * Sets volume id.
-     *
-     * @param volumeId the volume id
-     */
-    public void setVolumeId(long volumeId) {
-        this.volumeId = volumeId;
-    }
-
-    /**
-     * Gets local id.
-     *
-     * @return the local id
-     */
-    public int getLocalId() {
-        return this.localId;
-    }
-
-    /**
-     * Sets local id.
-     *
-     * @param localId the local id
-     */
-    public void setLocalId(int localId) {
-        this.localId = localId;
     }
 
     /**

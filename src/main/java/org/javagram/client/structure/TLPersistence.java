@@ -10,6 +10,7 @@ import org.javagram.api._primitives.TLContext;
 import org.javagram.api._primitives.TLObject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import org.javagram.MyTLAppConfiguration;
 
@@ -27,7 +28,7 @@ public class TLPersistence<T extends TLObject> extends TLContext {
     public void build(MyTLAppConfiguration config, Class<T> destClass) {
         super.build(config);
         long start = System.currentTimeMillis();
-        this.writer = new SafeFileWriter(this.config.getAuthFilename());
+        this.writer = new SafeFileWriter(this.config.getTemporaryFolder().toString() + File.separator + this.config.getAuthFilename());
         byte[] data = this.writer.loadData();
         BotLogger.warning(LOGTAG, "Loaded state in " + (System.currentTimeMillis() - start) + " ms");
         this._deserialize(data, destClass);

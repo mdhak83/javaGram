@@ -1,7 +1,7 @@
 package org.javagram.client.structure;
 
 import org.javagram.api._primitives.TLObject;
-import org.javagram.api.update.base.TLUpdateChannel;
+import org.javagram.api.update.base.ITLUpdateChannel;
 
 public class UpdateWrapper {
 
@@ -19,9 +19,9 @@ public class UpdateWrapper {
 
     public UpdateWrapper(TLObject update) {
         this.update = update;
-        if (update instanceof TLUpdateChannel) {
-            isChannel = true;
-            this.channelId = ((TLUpdateChannel) update).getChannelId();
+        if (update instanceof ITLUpdateChannel) {
+            this.isChannel = true;
+            this.channelId = ((ITLUpdateChannel) update).getChannelId();
         } else {
             this.channelId = 0;
         }

@@ -1,7 +1,6 @@
 package org.javagram.client.handlers;
 
 import org.javagram.client.handlers.interfaces.IUpdatesHandler;
-import java.util.List;
 import java.util.PriorityQueue;
 import org.javagram.client.structure.UpdateWrapper;
 import org.javagram.client.structure.UpdateWrapperComparator;
@@ -22,13 +21,6 @@ public class UpdateHandlerThread extends Thread {
     void addUpdate(UpdateWrapper newUpdate) {
         synchronized(this.updates) {
             this.updates.offer(newUpdate);
-            this.updates.notifyAll();
-        }
-    }
-
-    void addUpdates(List<UpdateWrapper> newUpdates) {
-        synchronized(this.updates) {
-            this.updates.addAll(newUpdates);
             this.updates.notifyAll();
         }
     }

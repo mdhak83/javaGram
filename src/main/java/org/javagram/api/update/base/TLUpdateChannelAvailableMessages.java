@@ -10,7 +10,7 @@ import org.javagram.utils.StreamingUtils;
  * The history of a @see <a href="https://core.telegram.org/api/channel">channel/supergroup</a> was hidden.
  * updateChannelAvailableMessages#70db6837 channel_id:int available_min_id:int = Update;
  */
-public class TLUpdateChannelAvailableMessages extends TLAbsUpdate {
+public class TLUpdateChannelAvailableMessages extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.
@@ -20,7 +20,7 @@ public class TLUpdateChannelAvailableMessages extends TLAbsUpdate {
     /**
      * Channel/supergroup ID
      */
-    private int channelID;
+    private int channelId;
 
     /**
      * Identifier of a maximum unavailable message in a channel due to hidden history.
@@ -36,12 +36,13 @@ public class TLUpdateChannelAvailableMessages extends TLAbsUpdate {
         return CLASS_ID;
     }
 
-    public int getChannelID() {
-        return channelID;
+    @Override
+    public int getChannelId() {
+        return channelId;
     }
 
-    public void setChannelID(int channelID) {
-        this.channelID = channelID;
+    public void setChannelId(int channelId) {
+        this.channelId = channelId;
     }
 
     public int getAvailableMinID() {
@@ -54,13 +55,13 @@ public class TLUpdateChannelAvailableMessages extends TLAbsUpdate {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        StreamingUtils.writeInt(this.channelID, stream);
+        StreamingUtils.writeInt(this.channelId, stream);
         StreamingUtils.writeInt(this.availableMinID, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.channelID = StreamingUtils.readInt(stream);
+        this.channelId = StreamingUtils.readInt(stream);
         this.availableMinID = StreamingUtils.readInt(stream);
     }
 

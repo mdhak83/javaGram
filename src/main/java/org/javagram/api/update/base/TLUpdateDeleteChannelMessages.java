@@ -7,13 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
-import org.javagram.api.chat.base.TLAbsChat;
-import org.javagram.client.handlers.AbstractUpdatesHandler;
 
 /**
  * The type TL update delete channel messages
  */
-public class TLUpdateDeleteChannelMessages extends TLAbsUpdate implements TLItfChannelUpdate {
+public class TLUpdateDeleteChannelMessages extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.

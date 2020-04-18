@@ -27,7 +27,7 @@ public class Scheduler {
     private static final AtomicInteger MESSAGES_IDS = new AtomicInteger(1);
     private static final Map<Long, Long> ID_GENERATION_TIME = new ConcurrentHashMap<>();
     private static final int SCHEDULER_TIMEOUT_MILLISECONDS = 15 * 1000;
-    private static final long CONFIRM_TIMEOUT_milliSECONDS = 60 * 1000;
+    private static final long CONFIRM_MILLISECONDS = 10 * 1000;
     private static final int MAX_WORKLOAD_SIZE = 3 * 1024;
     private static final int BIG_MESSAGE_SIZE = 1024;
     private static final long RETRY_TIMEOUT = 5 * 1000;
@@ -392,7 +392,7 @@ public class Scheduler {
         ArrayList<SchedulerPackage> foundedPackages = actualPackages(contextId);
 
         synchronized(this.confirmedMessages) {
-            if (foundedPackages.size() == 0 && (this.confirmedMessages.size() <= MAX_ACK_COUNT || (System.nanoTime() - this.firstConfirmTime) < CONFIRM_TIMEOUT_milliSECONDS)) {
+            if (foundedPackages.size() == 0 && (this.confirmedMessages.size() <= MAX_ACK_COUNT || (System.nanoTime() - this.firstConfirmTime) < CONFIRM_MILLISECONDS)) {
                 return null;
             }
         }

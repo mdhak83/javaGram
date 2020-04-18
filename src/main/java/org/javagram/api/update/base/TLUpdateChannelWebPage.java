@@ -10,7 +10,7 @@ import java.io.OutputStream;
 /**
  * The type TL update chat user typing.
  */
-public class TLUpdateChannelWebPage extends TLAbsUpdate implements TLItfChannelUpdate {
+public class TLUpdateChannelWebPage extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.

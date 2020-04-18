@@ -25,7 +25,6 @@ import org.javagram.api.storage.base.file.TLFileMov;
 import org.javagram.api.storage.base.file.TLFilePdf;
 import org.javagram.api.storage.base.file.TLFileGif;
 import org.javagram.api.storage.base.file.TLFileMp4;
-import org.javagram.api.update.base.TLUpdateChannel;
 import org.javagram.api.update.base.TLUpdateBotWebhookJSONQuery;
 import org.javagram.api.update.base.TLUpdateChannelAvailableMessages;
 import org.javagram.api.update.base.TLUpdateFavedSticker;
@@ -1614,7 +1613,6 @@ public class TLApiContext extends TLContext {
         registerClass(TLRequestChannelsDeleteMessages.CLASS_ID, TLRequestChannelsDeleteMessages.class);
         registerClass(TLRequestChannelsReadHistory.CLASS_ID, TLRequestChannelsReadHistory.class);
         registerClass(TLRequestUpdatesGetChannelDifference.CLASS_ID, TLRequestUpdatesGetChannelDifference.class);
-        registerClass(TLUpdateChannel.CLASS_ID, TLUpdateChannel.class);
         registerClass(TLUpdateChannelNewMessage.CLASS_ID, TLUpdateChannelNewMessage.class);
         registerClass(TLUpdateChannelTooLong.CLASS_ID, TLUpdateChannelTooLong.class);
         registerClass(TLUpdateChannelMessageViews.CLASS_ID, TLUpdateChannelMessageViews.class);

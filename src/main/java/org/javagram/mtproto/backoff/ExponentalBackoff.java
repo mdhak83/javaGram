@@ -2,7 +2,6 @@ package org.javagram.mtproto.backoff;
 
 import org.javagram.mtproto.log.Logger;
 
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExponentalBackoff {

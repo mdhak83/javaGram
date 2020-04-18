@@ -9,7 +9,7 @@ import java.io.OutputStream;
 /**
  * The type TL update new message.
  */
-public class TLUpdateChannelPinnedMessage extends TLAbsUpdate implements TLItfChannelUpdate {
+public class TLUpdateChannelPinnedMessage extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.

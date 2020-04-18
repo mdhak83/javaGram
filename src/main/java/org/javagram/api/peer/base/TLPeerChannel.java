@@ -61,7 +61,7 @@ public class TLPeerChannel extends TLAbsPeer {
 
     @Override
     public String toLog() {
-        return this.channelId + "";
+        return "PeerChannel#" + String.format("%08x", this.channelId);
     }
 
 }

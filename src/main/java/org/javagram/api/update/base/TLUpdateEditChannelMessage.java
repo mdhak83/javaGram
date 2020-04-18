@@ -15,7 +15,7 @@ import org.javagram.api.peer.base.TLPeerChat;
 /**
  * The type TL update new message.
  */
-public class TLUpdateEditChannelMessage extends TLAbsUpdate implements TLItfChannelUpdate {
+public class TLUpdateEditChannelMessage extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.

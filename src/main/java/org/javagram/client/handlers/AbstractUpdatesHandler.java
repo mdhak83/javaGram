@@ -1,7 +1,6 @@
 package org.javagram.client.handlers;
 
 import org.javagram.client.handlers.interfaces.IUpdatesHandler;
-import org.javagram.api.update.base.TLUpdateChannel;
 import org.javagram.api.update.base.TLUpdateBotWebhookJSONQuery;
 import org.javagram.api.update.base.TLUpdateReadChannelOutbox;
 import org.javagram.api.update.base.TLUpdateInlineBotCallbackQuery;
@@ -147,8 +146,6 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 this.onTLUpdateBotWebhookJSON((TLUpdateBotWebhookJSON) update);
             } else if (update instanceof TLUpdateBotWebhookJSONQuery) {
                 this.onTLUpdateBotWebhookJSONQuery((TLUpdateBotWebhookJSONQuery) update);
-            } else if (update instanceof TLUpdateChannel) {
-                this.onTLUpdateChannel((TLUpdateChannel) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelTooLong) {
                 this.onTLUpdateChannelTooLong((TLUpdateChannelTooLong) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelAvailableMessages) {
@@ -324,7 +321,7 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
 
         final int pts = this.config.getDifferenceParametersService().getPts(updateWrapper.getChannelId());
         final int newPts = pts + updateWrapper.getPtsCount();
-
+        
         if ((updateWrapper.getPts() == 0) || (newPts == updateWrapper.getPts())) {
             canHandle = true;
         } else {
@@ -522,18 +519,8 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
         this.onTLUpdateBotWebhookJSONQueryCustom(update);
     }
 
-    private void onTLUpdateChannel(TLUpdateChannel update, boolean gettingDifferences) {
-        if (this.config.getDatabaseManager().isChatMissing(update.getChannelId())) {
-            if (!gettingDifferences) {
-                this.config.getDifferencesHandler().getDifferences();
-            }
-        } else {
-            this.onTLUpdateChannelCustom(update);
-        }
-    }
-
     private void onTLUpdateChannelAvailableMessages(TLUpdateChannelAvailableMessages update, boolean gettingDifferences) {
-        if (this.config.getDatabaseManager().isChatMissing(update.getChannelID())) {
+        if (this.config.getDatabaseManager().isChatMissing(update.getChannelId())) {
             if (!gettingDifferences) {
                 this.config.getDifferencesHandler().getDifferences();
             }
@@ -1076,7 +1063,6 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
     protected abstract void onTLUpdateBotShippingQueryCustom(TLUpdateBotShippingQuery update);
     protected abstract void onTLUpdateBotWebhookJSONCustom(TLUpdateBotWebhookJSON update);
     protected abstract void onTLUpdateBotWebhookJSONQueryCustom(TLUpdateBotWebhookJSONQuery update);
-    protected abstract void onTLUpdateChannelCustom(TLUpdateChannel update);
     protected abstract void onTLUpdateChannelAvailableMessagesCustom(TLUpdateChannelAvailableMessages update);
     protected abstract void onTLUpdateChannelMessageViewsCustom(TLUpdateChannelMessageViews update);
     protected abstract void onTLUpdateChannelNewMessageCustom(TLUpdateChannelNewMessage update);

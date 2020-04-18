@@ -81,15 +81,13 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
         if (updates instanceof TLUpdateShortMessage) {
             final TLUpdateShortMessage updateShortMessage = (TLUpdateShortMessage) updates;
             final UpdateWrapper wrapper = new UpdateWrapper(updateShortMessage);
-            wrapper.setParams(updateShortMessage.getPts(), updateShortMessage.getPtsCount(),
-                    updateShortMessage.getDate(), 0, 0);
-            updateHandlerThread.addUpdate(wrapper);
+            wrapper.setParams(updateShortMessage.getPts(), updateShortMessage.getPtsCount(), updateShortMessage.getDate(), 0, 0);
+            this.updateHandlerThread.addUpdate(wrapper);
         } else if (updates instanceof TLUpdateShortChatMessage) {
             final TLUpdateShortChatMessage updateShortChatMessage = (TLUpdateShortChatMessage) updates;
             final UpdateWrapper wrapper = new UpdateWrapper(updateShortChatMessage);
-            wrapper.setParams(updateShortChatMessage.getPts(), updateShortChatMessage.getPtsCount(),
-                    updateShortChatMessage.getDate(), 0, 0);
-            updateHandlerThread.addUpdate(wrapper);
+            wrapper.setParams(updateShortChatMessage.getPts(), updateShortChatMessage.getPtsCount(), updateShortChatMessage.getDate(), 0, 0);
+            this.updateHandlerThread.addUpdate(wrapper);
         } else if (updates instanceof TLUpdateShort) {
             final TLUpdateShort updateShort = (TLUpdateShort) updates;
             final UpdateWrapper wrapper = new UpdateWrapper(updateShort.getUpdate());
@@ -107,9 +105,9 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             if (correctSeq) {
                 this.config.getChatsHandler().onChats(tlUpdates.getChats());
                 this.config.getUsersHandler().onUsers(tlUpdates.getUsers());
-                tlUpdates.getUpdates().forEach(x -> {
-                    final UpdateWrapper wrapper = new UpdateWrapper(x);
-                    wrapper.setParams(x.getPts(), x.getPtsCount(), tlUpdates.getDate(), tlUpdates.getSeq(), 0);
+                tlUpdates.getUpdates().forEach(absUpdate -> {
+                    final UpdateWrapper wrapper = new UpdateWrapper(absUpdate);
+                    wrapper.setParams(absUpdate.getPts(), absUpdate.getPtsCount(), tlUpdates.getDate(), tlUpdates.getSeq(), 0);
                     if (disablePtsCheck) {
                         wrapper.disablePtsCheck();
                     }
@@ -130,9 +128,9 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
             if (correctSeq) {
                 this.config.getChatsHandler().onChats(updatesCombined.getChats());
                 this.config.getUsersHandler().onUsers(updatesCombined.getUsers());
-                updatesCombined.getUpdates().forEach(x -> {
-                    final UpdateWrapper wrapper = new UpdateWrapper(x);
-                    wrapper.setParams(x.getPts(), x.getPtsCount(), updatesCombined.getDate(), updatesCombined.getSeq(), updatesCombined.getSeqStart());
+                updatesCombined.getUpdates().forEach(absUpdate -> {
+                    final UpdateWrapper wrapper = new UpdateWrapper(absUpdate);
+                    wrapper.setParams(absUpdate.getPts(), absUpdate.getPtsCount(), updatesCombined.getDate(), updatesCombined.getSeq(), updatesCombined.getSeqStart());
                     if (disablePtsCheck) {
                         wrapper.disablePtsCheck();
                     }
@@ -151,10 +149,6 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
         } else {
             BotLogger.debug(LOGTAG, "Unsupported TLAbsUpdates: " + updates.toString());
         }
-    }
-
-    public void processUpdates(@NotNull List<UpdateWrapper> updates) {
-        this.updateHandlerThread.addUpdates(updates);
     }
 
     /**

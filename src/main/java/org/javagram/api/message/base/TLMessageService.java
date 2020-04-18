@@ -219,10 +219,9 @@ public class TLMessageService extends TLAbsMessage {
     @Override
     public String toLog() {
         String ret;
-        String sFrom = this.fromId + "";
         String sTo = this.toId != null ? this.toId.toLog() : null;
         String sAction = this.action != null ? this.action.toLog() : null;
-        ret = "MessageService#" + this.id + " : from '" + (sFrom != null ? sFrom + " ": "---") + "' to '" + (sTo != null ? sTo : "---") + "' with content '" + (sAction != null ? sAction : "---") + "'";
+        ret = "MessageService#" + this.id + " : from User #" + String.format("%08x", this.fromId) + " to " + (sTo != null ? sTo : "---") + "' with content '" + (sAction != null ? sAction : "---") + "'";
         return ret;
     }
 

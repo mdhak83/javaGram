@@ -5,12 +5,11 @@ import org.javagram.api._primitives.TLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import static org.javagram.api.message.base.media.TLMessageMediaPhoto.CLASS_ID;
 
 /**
  * The type TL update channel new message
  */
-public class TLUpdateReadChannelInbox extends TLAbsUpdate implements TLItfChannelUpdate {
+public class TLUpdateReadChannelInbox extends TLAbsUpdate implements ITLUpdateChannel {
 
     /**
      * The constant CLASS_ID.

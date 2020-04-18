@@ -58,7 +58,6 @@ public class TelegramApi {
 
     private static final int CHANNELS_MAIN = 1;
     private static final int CHANNELS_FS = 2;
-    private static final int DEFAULT_TIMEOUT_CHECK = 15000;
     private static final int DEFAULT_TIMEOUT = 15000;
     private static final int FILE_TIMEOUT = 45000;
     private final Map<Integer, MTProto> dcProtos = new HashMap<>();

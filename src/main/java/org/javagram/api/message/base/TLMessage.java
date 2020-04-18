@@ -488,10 +488,10 @@ public class TLMessage extends TLAbsMessage {
     @Override
     public String toLog() {
         String ret;
-        String from = this.fromId + "";
+        String from = String.format("%08x", this.fromId);
         String to = this.toId != null ? this.toId.toLog() : null;
         String content = this.message;
-        ret = "Message#" + this.id + " : from '" + (from != null ? from + " ": "---") + "' to '" + (to != null ? to : "---") + "' with content '" + (content != null ? content : "---") + "' (Views=" + this.views + ")";
+        ret = "Message#" + String.format("%08x", this.id) + " from User#" + (from != null ? from : "---") + " to #" + (to != null ? to : "---") + " with content '" + (content != null ? content : "---") + "' (Views=" + this.views + ") " + (this.hasMedia() ? " with " + this.media.getClass().getSimpleName() : "") + ".";
         return ret;
     }
 

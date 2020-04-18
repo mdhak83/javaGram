@@ -5,7 +5,7 @@ package org.javagram.api.update.base;
  * @version 1.0
  *  @since 07/APR/2016
  */
-public interface TLItfChannelUpdate {
+public interface ITLUpdateChannel {
     
     int getChannelId();
 

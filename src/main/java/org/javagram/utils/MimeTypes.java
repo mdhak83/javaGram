@@ -790,7 +790,7 @@ public class MimeTypes {
     }
     
     public static String getExtension(String mimeType) {
-        return MIME_TO_EXT.get(mimeType).get(0);
+        return (MIME_TO_EXT.get(mimeType) != null ? MIME_TO_EXT.get(mimeType).get(0) : "UNK");
     }
     
     public static List<String> getAllExtensions(String mimeType) {

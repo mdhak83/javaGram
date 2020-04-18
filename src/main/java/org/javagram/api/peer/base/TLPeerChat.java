@@ -62,7 +62,7 @@ public class TLPeerChat extends TLAbsPeer {
 
     @Override
     public String toLog() {
-        return this.chatId + "";
+        return "PeerChat#" + String.format("%08x", this.chatId);
     }
 
 }

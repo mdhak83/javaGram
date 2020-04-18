@@ -61,7 +61,7 @@ public class TLPeerUser extends TLAbsPeer {
 
     @Override
     public String toLog() {
-        return this.userId + "";
+        return "PeerUser#" + String.format("%08x", this.userId);
     }
 
 }

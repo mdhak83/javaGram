@@ -22,35 +22,33 @@ public abstract class AbsMTProtoState {
 
     public void mergeKnownSalts(int currentTime, KnownSalt[] salts) {
         KnownSalt[] knownSalts = readKnownSalts();
-        HashMap<Long, KnownSalt> ids = new HashMap<Long, KnownSalt>();
+        HashMap<Long, KnownSalt> ids = new HashMap<>();
         for (KnownSalt s : knownSalts) {
-            if (s.getValidUntil() < currentTime) {
-                continue;
+            if (s.getValidUntil() >= currentTime) {
+                ids.put(s.getSalt(), s);
             }
-            ids.put(s.getSalt(), s);
         }
         for (KnownSalt s : salts) {
-            if (s.getValidUntil() < currentTime) {
-                continue;
+            if (s.getValidUntil() >= currentTime) {
+                ids.put(s.getSalt(), s);
             }
-            ids.put(s.getSalt(), s);
         }
-        writeKnownSalts(ids.values().toArray(new KnownSalt[0]));
+        this.writeKnownSalts(ids.values().toArray(new KnownSalt[0]));
     }
 
     public void addCurrentSalt(long salt) {
         int time = (int) (TimeOverlord.getInstance().getServerTime() / 1000);
-        mergeKnownSalts(time, new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
+        this.mergeKnownSalts(time, new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
     }
 
     public void badServerSalt(long salt) {
         int time = (int) (TimeOverlord.getInstance().getServerTime() / 1000);
-        writeKnownSalts(new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
+        this.writeKnownSalts(new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
     }
 
     public void initialServerSalt(long salt) {
         int time = (int) (TimeOverlord.getInstance().getServerTime() / 1000);
-        writeKnownSalts(new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
+        this.writeKnownSalts(new KnownSalt[]{new KnownSalt(time, time + 30 * 60, salt)});
     }
 
     public long findActualSalt(int time) {
@@ -60,7 +58,6 @@ public abstract class AbsMTProtoState {
                 return salt.getSalt();
             }
         }
-
         return 0;
     }
 

@@ -55,6 +55,9 @@ public class TelegramApi {
     private final String logtag;
     
     private static final AtomicInteger RPC_CALL_INDEX = new AtomicInteger(0);
+    private static final AtomicInteger SENDER_THREAD_COUNT = new AtomicInteger(0);
+    private static final AtomicInteger CONNECTION_THREAD_COUNT = new AtomicInteger(0);
+    private static final AtomicInteger TIMEOUT_THREAD_COUNT = new AtomicInteger(0);
 
     private static final int CHANNELS_MAIN = 1;
     private static final int CHANNELS_FS = 2;
@@ -311,7 +314,7 @@ public class TelegramApi {
     }
 
     private <T extends TLObject> T doRpcCall(TLMethod<T> method, int timeout, int destDc) throws IOException, java.util.concurrent.TimeoutException {
-        return doRpcCall(method, timeout, destDc, true);
+        return this.doRpcCall(method, timeout, destDc, true);
     }
 
     private <T extends TLObject> T doRpcCall(TLMethod<T> method, int timeout, int destDc, boolean authRequired) throws RpcException, java.util.concurrent.TimeoutException {
@@ -338,15 +341,15 @@ public class TelegramApi {
         try {
             resultObject = completableFuture.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            Logger.w(logtag, method.toString());
-            Logger.e(logtag, e);
+            Logger.w(logtag, method.toString() + " : " + e.getMessage());
+//            Logger.e(logtag, e);
         } catch (java.util.concurrent.TimeoutException e) {
-            Logger.w(logtag, method.toString());
-            Logger.e(logtag, e);
+            Logger.w(logtag, method.toString() + " : " + e.getMessage());
+            //Logger.e(logtag, e);
             throw e;
         } catch (ExecutionException e) {
-            Logger.w(logtag, method.toString());
-            Logger.e(logtag, e);
+            Logger.w(logtag, method.toString() + " : " + e.getMessage());
+            //Logger.e(logtag, e);
             if (e.getCause() instanceof RpcException) {
                 throw (RpcException) e.getCause();
             }
@@ -594,7 +597,9 @@ public class TelegramApi {
         tlRequestUploadGetFile.setLocation(_location);
         tlRequestUploadGetFile.setOffset(_offset);
         tlRequestUploadGetFile.setLimit(_limit);
-        return doRpcCall(tlRequestUploadGetFile, FILE_TIMEOUT, dcId);
+        tlRequestUploadGetFile.setPrecise(false);
+        tlRequestUploadGetFile.setCdnSupported(true);
+        return this.doRpcCall(tlRequestUploadGetFile, FILE_TIMEOUT, dcId);
     }
 
     public TLAbsCdnFile doGetCdnFile(int dcId, TLBytes fileToken, int offset, int limit) throws IOException, java.util.concurrent.TimeoutException {
@@ -897,12 +902,12 @@ public class TelegramApi {
          * Instantiates a new Sender thread.
          */
         public SenderThread() {
-            setName("Sender#" + hashCode());
+            this.setName("Sender#" + TelegramApi.SENDER_THREAD_COUNT.getAndIncrement());
+            this.setPriority(Thread.MIN_PRIORITY);
         }
 
         @Override
         public void run() {
-            setPriority(Thread.MIN_PRIORITY);
             while (!TelegramApi.this.isClosed) {
                 Logger.d(TelegramApi.this.logtag, "Sender iteration");
                 RpcCallbackWrapper wrapper = null;
@@ -968,11 +973,13 @@ public class TelegramApi {
     }
 
     private class ConnectionThread extends Thread {
+        
         /**
          * Instantiates a new Connection thread.
          */
         public ConnectionThread() {
-            setName("Connection#" + hashCode());
+            this.setName("Connection#" + TelegramApi.CONNECTION_THREAD_COUNT.getAndIncrement());
+            this.setPriority(Thread.MIN_PRIORITY);
         }
 
         private MTProto waitForDc(final int dcId) throws IOException, java.util.concurrent.TimeoutException {
@@ -1001,7 +1008,7 @@ public class TelegramApi {
                 synchronized (TelegramApi.this.dcProtos) {
                     proto = TelegramApi.this.dcProtos.get(dcId);
                     if (proto != null) {
-                        if (proto.isClosed()) {
+                        if (proto.isClosed().get()) {
                             Logger.d(TelegramApi.this.logtag, "#" + dcId + "proto removed because of death");
                             TelegramApi.this.dcProtos.remove(dcId);
                             proto = null;
@@ -1106,7 +1113,6 @@ public class TelegramApi {
 
         @Override
         public void run() {
-            setPriority(Thread.MIN_PRIORITY);
             while (!TelegramApi.this.isClosed) {
                 Logger.d(TelegramApi.this.logtag, "Connection iteration");
                 if (TelegramApi.this.mainProto == null) {
@@ -1215,7 +1221,7 @@ public class TelegramApi {
          * Instantiates a new Timeout thread.
          */
         public TimeoutThread() {
-            setName("Timeout#" + hashCode());
+            this.setName("Timeout#" + TelegramApi.TIMEOUT_THREAD_COUNT.getAndIncrement());
         }
 
         @Override
@@ -1223,7 +1229,7 @@ public class TelegramApi {
             while (!TelegramApi.this.isClosed) {
                 Logger.d(TelegramApi.this.logtag, "Timeout Iteration");
                 Long key = null;
-                Integer id = null;
+                Integer id;
                 synchronized (TelegramApi.this.timeoutTimes) {
                     if (TelegramApi.this.timeoutTimes.isEmpty()) {
                         key = null;
@@ -1279,6 +1285,7 @@ public class TelegramApi {
                     Logger.d(TelegramApi.this.logtag, "RPC #" + id + ": Timeout ignored2");
                 }
             }
+            
             synchronized(TelegramApi.this.timeoutTimes) {
                 for (Map.Entry<Long, Integer> entry : TelegramApi.this.timeoutTimes.entrySet()) {
                     RpcCallbackWrapper currentCallback;

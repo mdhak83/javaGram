@@ -9,12 +9,13 @@ import org.javagram.api._primitives.TLObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.javagram.api.messages.base.chats.TLAbsMessagesChats;
 
 /**
  * Returns chat basic info on their IDs.
  * messages.getChats#3c6aa187 id:Vector&lt;int&gt; = messages.Chats;
  */
-public class TLRequestMessagesGetChats extends TLMethod<TLMessagesChats> {
+public class TLRequestMessagesGetChats extends TLMethod<TLAbsMessagesChats> {
 
     /**
      * The constant CLASS_ID.
@@ -54,12 +55,12 @@ public class TLRequestMessagesGetChats extends TLMethod<TLMessagesChats> {
     }
 
     @Override
-    public TLMessagesChats deserializeResponse(InputStream stream, TLContext context) throws IOException {
+    public TLAbsMessagesChats deserializeResponse(InputStream stream, TLContext context) throws IOException {
         final TLObject res = StreamingUtils.readTLObject(stream, context);
         if (res == null) {
             throw new IOException("Unable to parse response");
         } else if (res instanceof TLMessagesChats) {
-            return (TLMessagesChats) res;
+            return (TLAbsMessagesChats) res;
         } else {
             throw new IOException("Incorrect response type. Expected " + TLMessagesChats.class.getName() + ", got: " + res.getClass().getCanonicalName());
         }

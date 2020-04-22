@@ -1,10 +1,3 @@
-/*
- * This is the source code of bot v. 2.0
- * It is licensed under GNU GPL v. 3 or later.
- * You should have received a copy of the license in this archive (see LICENSE).
- *
- * Copyright Ruben Bermudez, 9/01/15.
- */
 package org.javagram.api.webpage.base;
 
 import org.javagram.utils.StreamingUtils;
@@ -13,13 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * The type TL web page pending.
- * @author Ruben Bermudez
- * @version 2.0
- * TLWebPagePending
- * @since 09/JAN/2015
- */
 public class TLWebPagePending extends TLAbsWebPage {
 
     /**

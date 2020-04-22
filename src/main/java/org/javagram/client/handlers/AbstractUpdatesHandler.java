@@ -92,6 +92,7 @@ import org.javagram.api.update.base.TLUpdateTheme;
 import org.javagram.api.update.base.TLUpdateUserPinnedMessage;
 import org.javagram.api.updates.base.TLUpdateShort;
 import org.javagram.MyTLAppConfiguration;
+import org.javagram.api.update.base.TLUpdateChannel;
 import org.javagram.api.updates.base.TLUpdatesState;
 
 /**
@@ -148,6 +149,8 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 this.onTLUpdateBotWebhookJSONQuery((TLUpdateBotWebhookJSONQuery) update);
             } else if (update instanceof TLUpdateChannelTooLong) {
                 this.onTLUpdateChannelTooLong((TLUpdateChannelTooLong) update, updateWrapper.isGettingDifferences());
+            } else if (update instanceof TLUpdateChannel) {
+                this.onTLUpdateChannel((TLUpdateChannel) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelAvailableMessages) {
                 this.onTLUpdateChannelAvailableMessages((TLUpdateChannelAvailableMessages) update, updateWrapper.isGettingDifferences());
             } else if (update instanceof TLUpdateChannelMessageViews) {
@@ -331,7 +334,7 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 if (!updateWrapper.isChannel() || this.config.getDatabaseManager().isChatMissing(updateWrapper.getChannelId())) {
                     this.getDifferences();
                 } else {
-                    final TLAbsChat chat = this.config.getDatabaseManager().getChatById(updateWrapper.getChannelId());
+                    final TLAbsChat chat = this.config.getDatabaseManager().getChatById(updateWrapper.getChannelId(), null);
                     if (chat != null) {
                         this.config.getDifferencesHandler().getChannelDifferences(chat.getId(), chat.getAccessHash());
                     }
@@ -546,7 +549,7 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                     this.config.getDifferencesHandler().getDifferences();
                 }
             } else {
-                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId());
+                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
                 if (channel != null) {
                     this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
                 }
@@ -582,10 +585,20 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 this.config.getDifferencesHandler().getDifferences();
             }
         } else {
-            final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId());
+            final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
             if (channel != null) {
                 this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
             }
+        }
+    }
+
+    private void onTLUpdateChannel(TLUpdateChannel update, boolean gettingDifferences) {
+        if (this.config.getDatabaseManager().isChatMissing(update.getChannelId())) {
+            if (!gettingDifferences) {
+                this.config.getDifferencesHandler().getDifferences();
+            }
+        } else {
+            this.onTLUpdateChannelCustom(update);
         }
     }
 
@@ -742,7 +755,7 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                     this.config.getDifferencesHandler().getDifferences();
                 }
             } else {
-                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId());
+                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
                 if (channel != null) {
                     this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
                 }
@@ -1063,6 +1076,7 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
     protected abstract void onTLUpdateBotShippingQueryCustom(TLUpdateBotShippingQuery update);
     protected abstract void onTLUpdateBotWebhookJSONCustom(TLUpdateBotWebhookJSON update);
     protected abstract void onTLUpdateBotWebhookJSONQueryCustom(TLUpdateBotWebhookJSONQuery update);
+    protected abstract void onTLUpdateChannelCustom(TLUpdateChannel update);
     protected abstract void onTLUpdateChannelAvailableMessagesCustom(TLUpdateChannelAvailableMessages update);
     protected abstract void onTLUpdateChannelMessageViewsCustom(TLUpdateChannelMessageViews update);
     protected abstract void onTLUpdateChannelNewMessageCustom(TLUpdateChannelNewMessage update);

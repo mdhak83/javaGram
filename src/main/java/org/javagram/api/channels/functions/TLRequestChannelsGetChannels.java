@@ -9,18 +9,21 @@ import org.javagram.api._primitives.TLObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.javagram.api._primitives.TLVector;
+import org.javagram.api.channel.base.input.TLAbsInputChannel;
+import org.javagram.api.messages.base.chats.TLAbsMessagesChats;
 
 /**
  * The type TL request channel get channels
  */
-public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
+public class TLRequestChannelsGetChannels extends TLMethod<TLAbsMessagesChats> {
 
     /**
      * The constant CLASS_ID.
      */
     public static final int CLASS_ID = 0xa7f6bbb;
 
-    private TLIntVector id;
+    private TLVector<TLAbsInputChannel> id;
 
     public TLRequestChannelsGetChannels() {
         super();
@@ -31,23 +34,11 @@ public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
         return CLASS_ID;
     }
 
-    @Override
-    public TLMessagesChats deserializeResponse(InputStream stream, TLContext context) throws IOException {
-        final TLObject res = StreamingUtils.readTLObject(stream, context);
-        if (res == null) {
-            throw new IOException("Unable to parse response");
-        } else if (res instanceof TLMessagesChats) {
-            return (TLMessagesChats) res;
-        } else {
-            throw new IOException("Incorrect response type. Expected " + TLMessagesChats.class.getName() +", got: " + res.getClass().getName());
-        }
-    }
-
-    public TLIntVector getId() {
+    public TLVector<TLAbsInputChannel> getId() {
         return id;
     }
 
-    public void setId(TLIntVector id) {
+    public void setId(TLVector<TLAbsInputChannel> id) {
         this.id = id;
     }
 
@@ -58,7 +49,19 @@ public class TLRequestChannelsGetChannels extends TLMethod<TLMessagesChats> {
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.id = StreamingUtils.readTLIntVector(stream, context);
+        this.id = StreamingUtils.readTLVector(stream, context, TLAbsInputChannel.class);
+    }
+
+    @Override
+    public TLAbsMessagesChats deserializeResponse(InputStream stream, TLContext context) throws IOException {
+        final TLObject res = StreamingUtils.readTLObject(stream, context);
+        if (res == null) {
+            throw new IOException("Unable to parse response");
+        } else if (res instanceof TLAbsMessagesChats) {
+            return (TLAbsMessagesChats) res;
+        } else {
+            throw new IOException("Incorrect response type. Expected " + TLMessagesChats.class.getName() +", got: " + res.getClass().getName());
+        }
     }
 
     @Override

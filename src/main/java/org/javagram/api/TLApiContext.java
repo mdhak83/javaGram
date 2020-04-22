@@ -1128,6 +1128,7 @@ import org.javagram.api.stickers.functions.TLRequestStickersAddStickerToSet;
 import org.javagram.api.stickers.functions.TLRequestStickersChangeStickerPosition;
 import org.javagram.api.stickers.functions.TLRequestStickersCreateStickerSet;
 import org.javagram.api.stickers.functions.TLRequestStickersRemoveStickerFromSet;
+import org.javagram.api.update.base.TLUpdateChannel;
 import org.javagram.api.upload.functions.TLRequestUploadGetCdnFileHashes;
 import org.javagram.api.upload.functions.TLRequestUploadGetFileHashes;
 import org.javagram.api.webpage.base.TLWebPage;
@@ -2024,6 +2025,7 @@ public class TLApiContext extends TLContext {
         registerClass(TLUpdateFavedSticker.CLASS_ID, TLUpdateFavedSticker.class);
         registerClass(TLUpdateChannelReadMessagesContents.CLASS_ID, TLUpdateChannelReadMessagesContents.class);
         registerClass(TLUpdateContactsReset.CLASS_ID, TLUpdateContactsReset.class);
+        registerClass(TLUpdateChannel.CLASS_ID, TLUpdateChannel.class);
         registerClass(TLUpdateChannelAvailableMessages.CLASS_ID, TLUpdateChannelAvailableMessages.class);
         registerClass(TLUpdateDialogUnreadMark.CLASS_ID, TLUpdateDialogUnreadMark.class);
         registerClass(TLUpdateUserPinnedMessage.CLASS_ID, TLUpdateUserPinnedMessage.class);

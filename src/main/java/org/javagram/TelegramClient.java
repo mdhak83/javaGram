@@ -104,11 +104,16 @@ public class TelegramClient {
         // Create rest of handlers
         this._createKernelHandler();
         BotLogger.info(this.logtag, "Initialized");
+        
         return loginResult;
     }
     
     public void start() {
         BotLogger.debug(this.logtag, "Starting");
+
+        //Retrieves current client's user
+        this.config.getDatabaseManager().retrieveSelf();
+
         this.config.getKernelHandler().start();
         BotLogger.debug(this.logtag, "Started");
     }

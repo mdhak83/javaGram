@@ -88,6 +88,7 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
     public synchronized void doAuth(@NotNull TLAbsAuthAuthorization authorization) {
         if (authorization instanceof TLAuthAuthorization && authorization.getUser() != null && authorization.getUser() instanceof TLUser) {
             final TLUser user = (TLUser) authorization.getUser();
+            this.config.getDatabaseManager().addUser(user);
             final TLKey key = findKey(getPrimaryDc());
             key.setAuthorised(true);
             this.getObject().setUid(user.getId());

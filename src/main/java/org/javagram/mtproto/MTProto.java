@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.javagram.MyTLAppConfiguration;
 import org.javagram.mtproto.secure.CryptoUtils;
@@ -54,15 +55,15 @@ import org.javagram.utils.DeserializeException;
 public class MTProto {
 
     private static final AtomicInteger INSTANCE_INDEX = new AtomicInteger(1000);
+    private static final AtomicInteger SCHEDULER_THREAD_INDEX = new AtomicInteger(0);
+    private static final AtomicInteger RESPONSE_PROCESSOR_THREAD_INDEX = new AtomicInteger(0);
+    private static final AtomicInteger CONNECTION_FIXER_THREAD_INDEX = new AtomicInteger(0);
 
     private static final int MESSAGES_CACHE = 3000;
     private static final int MESSAGES_CACHE_MIN = 20;
-
     private static final int MAX_INTERNAL_FLOOD_WAIT_SECONDS = 10;
-
     private static final int PING_INTERVAL_REQUEST = 60000;
     private static final int PING_INTERVAL_SECONDS = 75;
-
     private static final int ERROR_MSG_ID_TOO_SMALL = 16;
     private static final int ERROR_MSG_ID_TOO_BIG = 17;
     private static final int ERROR_MSG_ID_BITS = 18;
@@ -74,13 +75,11 @@ public class MTProto {
     private static final int ERROR_SEQ_EXPECTED_ODD = 35;
     private static final int ERROR_BAD_SERVER_SALT = 48;
     private static final int ERROR_BAD_CONTAINER = 64;
-
     private static final int PING_TIMEOUT = 60 * 1000;
     private static final int RESEND_TIMEOUT = 60 * 1000;
-
     private static final int FUTURE_REQUEST_COUNT = 64;
     private static final int FUTURE_MINIMAL = 5;
-    private static final long FUTURE_TIMEOUT = 30 * 60 * 1000;//30 secs
+    private static final long FUTURE_TIMEOUT_MILLIS = 30 * 60 * 1000;
 
     private final String logtag;
     private final int instanceIndex;
@@ -102,13 +101,13 @@ public class MTProto {
     private final byte[] authKeyId;
     private byte[] session;
 
-    private boolean isClosed;
+    private AtomicBoolean isClosed = new AtomicBoolean(false);
 
     private final MTProtoCallback callback;
 
     private final AbsMTProtoState state;
 
-    private long futureSaltsRequestedTime = Long.MIN_VALUE;
+    private long futureSaltsRequestedTime = 0L;
 
     private int roundRobin;
 
@@ -138,11 +137,11 @@ public class MTProto {
         this.tcpListener = new TcpListener();
         this.scheduler = new Scheduler(this, callWrapper);
         this.schedulerThread = new SchedulerThread();
-        this.config.getExecutor().submit(this.schedulerThread);
+        this.schedulerThread.start();
         this.responseProcessor = new ResponseProcessor();
-        this.config.getExecutor().submit(this.responseProcessor);
+        this.responseProcessor.start();
         this.connectionFixerThread = new ConnectionFixerThread();
-        this.config.getExecutor().submit(this.connectionFixerThread);
+        this.connectionFixerThread.start();
     }
 
     public static int readInt(byte[] src) {
@@ -176,8 +175,8 @@ public class MTProto {
     }
 
     public void close() {
-        if (!this.isClosed) {
-            this.isClosed = true;
+        if (!this.isClosed.get()) {
+            this.isClosed.set(true);
             if (this.connectionFixerThread != null) {
                 this.connectionFixerThread.interrupt();
             }
@@ -191,7 +190,7 @@ public class MTProto {
         }
     }
 
-    public boolean isClosed() {
+    public AtomicBoolean isClosed() {
         return this.isClosed;
     }
 
@@ -243,20 +242,20 @@ public class MTProto {
     }
 
     private void onMTMessage(MTMessage mtMessage) {
-        if ((this.futureSaltsRequestedTime - System.nanoTime()) > (FUTURE_TIMEOUT * 1000L)) {
+        if ((System.nanoTime() - this.futureSaltsRequestedTime) > FUTURE_TIMEOUT_MILLIS * 1000000L) {
             Logger.d(this.logtag, "Salt check timeout");
             final int count = this.state.maximumCachedSalts(TimeUtil.getUnixTime(mtMessage.getMessageId()));
             if (count < FUTURE_MINIMAL) {
                 Logger.d(this.logtag, "Too few actual salts: " + count + ", requesting news");
-                this.scheduler.postMessage(new MTGetFutureSalts(FUTURE_REQUEST_COUNT), false, FUTURE_TIMEOUT);
-                this.futureSaltsRequestedTime = System.nanoTime();
+                this.scheduler.postMessage(new MTGetFutureSalts(FUTURE_REQUEST_COUNT), false, FUTURE_TIMEOUT_MILLIS);
             }
+            this.futureSaltsRequestedTime = System.nanoTime();
         }
 
         if ((mtMessage.getSeqNo() % 2) == 1) {
             this.scheduler.confirmMessage(mtMessage.getMessageId());
         }
-        if (!needProcessing(mtMessage.getMessageId())) {
+        if (!this.needProcessing(mtMessage.getMessageId())) {
             if (Logger.LOG_IGNORED) {
                 Logger.d(this.logtag, "Ignoring messages #" + mtMessage.getMessageId());
             }
@@ -650,17 +649,17 @@ public class MTProto {
         return new MTMessage(messageId, mes_seq, message, message.length);
     }
 
-    private class SchedulerThread extends Thread {
+    private final class SchedulerThread extends Thread {
         
         private SchedulerThread() {
-            setName("Scheduler#" + hashCode());
         }
 
         @Override
         public void run() {
-            setPriority(Thread.MIN_PRIORITY);
+            this.setName("Scheduler#" + SCHEDULER_THREAD_INDEX.getAndIncrement());
+            this.setPriority(Thread.MIN_PRIORITY);
             PrepareSchedule prepareSchedule = new PrepareSchedule();
-            while (!MTProto.this.isClosed) {
+            while (!MTProto.this.isClosed.get()) {
                 if (Logger.LOG_THREADS) {
                     Logger.d(MTProto.this.logtag, "Scheduler Iteration");
                 }
@@ -682,6 +681,9 @@ public class MTProto {
                         }
                         try {
                             MTProto.this.scheduler.wait(Math.min(prepareSchedule.getDelay(), 30000));
+                            if (MTProto.this.isClosed.get()) {
+                                return;
+                            }
                         } catch (InterruptedException e) {
                             Logger.e(MTProto.this.logtag, e);
                             return;
@@ -727,7 +729,7 @@ public class MTProto {
                     long start = System.currentTimeMillis();
                     PreparedPackage preparedPackage = MTProto.this.scheduler.doSchedule(context.getContextId(), MTProto.this.initedContext.contains(context.getContextId()));
                     if (Logger.LOG_THREADS) {
-                        Logger.d(MTProto.this.logtag, "Schedulled in " + (System.currentTimeMillis() - start) + " ms");
+                        Logger.d(MTProto.this.logtag, "Scheduled in " + (System.currentTimeMillis() - start) + " ms");
                     }
                     if (preparedPackage == null) {
                         continue;
@@ -753,15 +755,16 @@ public class MTProto {
         }
     }
 
-    private class ResponseProcessor extends Thread {
+    private final class ResponseProcessor extends Thread {
+        
         public ResponseProcessor() {
-            setName("ResponseProcessor#" + hashCode());
+            this.setName("ResponseProcessor#" + RESPONSE_PROCESSOR_THREAD_INDEX.getAndIncrement());
         }
 
         @Override
         public void run() {
             setPriority(Thread.MIN_PRIORITY);
-            while (!MTProto.this.isClosed) {
+            while (!MTProto.this.isClosed.get()) {
                 if (Logger.LOG_THREADS) {
                     Logger.d(MTProto.this.logtag, "Response Iteration");
                 }
@@ -769,6 +772,9 @@ public class MTProto {
                     if (MTProto.this.inQueue.isEmpty()) {
                         try {
                             MTProto.this.inQueue.wait();
+                            if (MTProto.this.isClosed.get()) {
+                                return;
+                            }
                         } catch (InterruptedException e) {
                             return;
                         }
@@ -784,15 +790,16 @@ public class MTProto {
         }
     }
 
-    private class ConnectionFixerThread extends Thread {
+    private final class ConnectionFixerThread extends Thread {
+        
         private ConnectionFixerThread() {
-            setName("ConnectionFixerThread#" + hashCode());
+            this.setName("ConnectionFixerThread#" + CONNECTION_FIXER_THREAD_INDEX.getAndIncrement());
         }
 
         @Override
         public void run() {
-            setPriority(Thread.MIN_PRIORITY);
-            while (!MTProto.this.isClosed) {
+            this.setPriority(Thread.MIN_PRIORITY);
+            while (!MTProto.this.isClosed.get()) {
                 if (Logger.LOG_THREADS) {
                     Logger.d(MTProto.this.logtag, "Connection Fixer Iteration");
                 }
@@ -800,8 +807,11 @@ public class MTProto {
                     if (MTProto.this.contexts.size() >= MTProto.this.desiredConnectionCount) {
                         try {
                             MTProto.this.contexts.wait();
+                            if (MTProto.this.isClosed.get()) {
+                                break;
+                            }
                         } catch (InterruptedException e) {
-                            return;
+                            break;
                         }
                     }
                 }
@@ -809,9 +819,6 @@ public class MTProto {
                 ConnectionType type = MTProto.this.connectionRate.tryConnection();
                 TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), MTProto.this.tcpListener);
                 context.connect();
-                if (MTProto.this.isClosed) {
-                    return;
-                }
                 MTProto.this.scheduler.postMessageDelayed(new MTPing(Entropy.getInstance().generateRandomId()), false, PING_TIMEOUT, 0, context.getContextId(), false);
                 synchronized (MTProto.this.contexts) {
                     MTProto.this.contexts.add(context);
@@ -821,14 +828,18 @@ public class MTProto {
                     MTProto.this.scheduler.notifyAll();
                 }
             }
+            MTProto.this.contexts.forEach(context -> {
+                context.close();
+            });
+            
         }
     }
 
-    private class TcpListener implements TcpContextCallback {
+    private final class TcpListener implements TcpContextCallback {
 
         @Override
         public void onRawMessage(byte[] data, int offset, int len, TcpContext context) {
-            if (MTProto.this.isClosed) {
+            if (MTProto.this.isClosed.get()) {
                 return;
             }
             try {
@@ -902,7 +913,7 @@ public class MTProto {
 
         @Override
         public void onError(int errorCode, TcpContext context) {
-            if (MTProto.this.isClosed) {
+            if (MTProto.this.isClosed.get()) {
                 return;
             }
 
@@ -914,7 +925,7 @@ public class MTProto {
 
         @Override
         public void onChannelBroken(TcpContext context) {
-            if (MTProto.this.isClosed) {
+            if (MTProto.this.isClosed.get()) {
                 return;
             }
             int contextId = context.getContextId();
@@ -935,7 +946,7 @@ public class MTProto {
 
         @Override
         public void onFastConfirm(int hash) {
-            if (MTProto.this.isClosed) {
+            if (MTProto.this.isClosed.get()) {
                 return;
             }
             MTProto.this.scheduler.onMessageFastConfirmed(hash);
@@ -946,7 +957,7 @@ public class MTProto {
         }
     }
 
-    private class EncryptedMessage {
+    private final class EncryptedMessage {
         public byte[] data;
         public int fastConfirm;
     }

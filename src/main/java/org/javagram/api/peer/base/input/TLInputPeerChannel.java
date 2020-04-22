@@ -46,6 +46,7 @@ public class TLInputPeerChannel extends TLAbsInputPeer {
     }
 
     public void setChannelId(int channelId) {
+        this.id = channelId;
         this.channelId = channelId;
     }
 

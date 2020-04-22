@@ -42,6 +42,7 @@ public class TLInputPeerChat extends TLAbsInputPeer {
     }
 
     public void setChatId(int chatId) {
+        this.id = chatId;
         this.chatId = chatId;
     }
 

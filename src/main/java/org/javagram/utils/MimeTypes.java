@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class MimeTypes {
     
+    private final static String LOGTAG = "[MimeTypes]";
+    
     private final static String[][] MIME_TYPES = new String[][] {
         { "application/andrew-inset", "ez"},
         { "application/applixware", "aw"},
@@ -790,14 +792,32 @@ public class MimeTypes {
     }
     
     public static String getExtension(String mimeType) {
+        if (mimeType != null) {
+            mimeType = mimeType.trim().toLowerCase();
+        }
+        if (MIME_TO_EXT.get(mimeType) == null) {
+            BotLogger.warning(LOGTAG, "MimeType: '" + mimeType + "' is unknown.");
+        }
         return (MIME_TO_EXT.get(mimeType) != null ? MIME_TO_EXT.get(mimeType).get(0) : "UNK");
     }
     
     public static List<String> getAllExtensions(String mimeType) {
+        if (mimeType != null) {
+            mimeType = mimeType.trim().toLowerCase();
+        }
+        if (MIME_TO_EXT.get(mimeType) == null) {
+            BotLogger.warning(LOGTAG, "MimeType: '" + mimeType + "' is unknown.");
+        }
         return MIME_TO_EXT.get(mimeType);
     }
     
     public static String getMimeType(String extension) {
+        if (extension != null) {
+            extension = extension.trim().toLowerCase();
+        }
+        if (EXT_TO_MIME.get(extension) == null) {
+            BotLogger.warning(LOGTAG, "Extension: '" + extension + "' is unknown.");
+        }
         return EXT_TO_MIME.get(extension);
     }
     

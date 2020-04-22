@@ -20,11 +20,22 @@ public class TLRequestUploadGetFile extends TLMethod<TLAbsFile> {
      */
     public static final int CLASS_ID = 0xb15a9afc;
 
-    private static final int FLAG_PRECISE           = 0x00000001; // 0
-    private static final int FLAG_CDN_SUPPORTED     = 0x00000002; // 1
+    private static final int FLAG_PRECISE           = 0x00000001; // 0 : Disable some checks on limit and offset values, useful for example to stream videos by keyframes
+    private static final int FLAG_CDN_SUPPORTED     = 0x00000002; // 1 : Whether the current client supports @see <a href="https://core.telegram.org/cdn">CDN downloads</a>
 
+    /**
+     * File location
+     */
     private TLAbsInputFileLocation location;
+
+    /**
+     * Number of bytes to be skipped
+     */
     private int offset;
+    
+    /**
+     * Number of bytes to be returned
+     */
     private int limit;
 
     public TLRequestUploadGetFile() {
@@ -41,68 +52,43 @@ public class TLRequestUploadGetFile extends TLMethod<TLAbsFile> {
     public int getClassId() {
         return CLASS_ID;
     }
-
-    @Override
-    public TLAbsFile deserializeResponse(InputStream stream, TLContext context) throws IOException {
-        TLObject res = StreamingUtils.readTLObject(stream, context);
-        if (res == null)
-            throw new IOException("Unable to parse response");
-        if (res instanceof TLAbsFile)
-            return (TLAbsFile) res;
-        throw new IOException("Incorrect response type. Expected " + TLAbsFile.class.getCanonicalName()
-                + ", got: " + res.getClass().getCanonicalName());
+    
+    public boolean isPrecise() {
+        return this.isFlagSet(FLAG_PRECISE);
+    }
+    
+    public void setPrecise(boolean value) {
+        this.setFlag(FLAG_PRECISE, value);
     }
 
-    /**
-     * Gets location.
-     *
-     * @return the location
-     */
+    public boolean isCdnSupported() {
+        return this.isFlagSet(FLAG_CDN_SUPPORTED);
+    }
+
+    public void setCdnSupported(boolean value) {
+        this.setFlag(FLAG_CDN_SUPPORTED, value);
+    }
+
     public TLAbsInputFileLocation getLocation() {
         return this.location;
     }
 
-    /**
-     * Sets location.
-     *
-     * @param value the value
-     */
     public final void setLocation(TLAbsInputFileLocation value) {
         this.location = value;
     }
 
-    /**
-     * Gets offset.
-     *
-     * @return the offset
-     */
     public int getOffset() {
         return this.offset;
     }
 
-    /**
-     * Sets offset.
-     *
-     * @param value the value
-     */
     public final void setOffset(int value) {
         this.offset = value;
     }
 
-    /**
-     * Gets limit.
-     *
-     * @return the limit
-     */
     public int getLimit() {
         return this.limit;
     }
 
-    /**
-     * Sets limit.
-     *
-     * @param value the value
-     */
     public final void setLimit(int value) {
         this.limit = value;
     }
@@ -121,6 +107,18 @@ public class TLRequestUploadGetFile extends TLMethod<TLAbsFile> {
         this.location = StreamingUtils.readTLObject(stream, context, TLAbsInputFileLocation.class);
         this.offset = StreamingUtils.readInt(stream);
         this.limit = StreamingUtils.readInt(stream);
+    }
+
+    @Override
+    public TLAbsFile deserializeResponse(InputStream stream, TLContext context) throws IOException {
+        TLObject res = StreamingUtils.readTLObject(stream, context);
+        if (res == null) {
+            throw new IOException("Unable to parse response");
+        } if (res instanceof TLAbsFile) {
+            return (TLAbsFile) res;
+        } else {
+            throw new IOException("Incorrect response type. Expected " + TLAbsFile.class.getCanonicalName() + ", got: " + res.getClass().getCanonicalName());
+        }
     }
 
     @Override

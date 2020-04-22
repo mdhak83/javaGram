@@ -140,6 +140,7 @@ public class TLWebPage extends TLAbsWebPage {
         this.id = id;
     }
 
+    @Override
     public String getUrl() {
         return url;
     }

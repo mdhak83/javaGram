@@ -2,7 +2,6 @@ package org.javagram.mtproto.transport;
 
 import org.javagram.mtproto.MTProto;
 import org.javagram.mtproto.log.Logger;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
@@ -11,20 +10,18 @@ import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jawnae.pyronet.PyroClient;
-import jawnae.pyronet.PyroClientListener;
-import jawnae.pyronet.PyroSelector;
+import java.util.logging.Level;
+import org.javagram.pyronet.PyroClient;
+import org.javagram.pyronet.PyroClientListener;
+import org.javagram.pyronet.PyroSelector;
 
 public class TcpContext implements PyroClientListener {
-    private static volatile Integer nextChannelToken = 1;
-    private static final int MAX_PACKED_SIZE = 1024 * 1024 * 1024;//1 MB
-    private static final AtomicInteger contextLastId = new AtomicInteger(1);
-    private static final int CONNECTION_TIMEOUT = 30000;
 
-    private static int generateChannelToken() {
-        return nextChannelToken++;
-    }
+    private static volatile Integer NextChannelToken = 1;
+    private static final int MAX_PACKED_SIZE = 1024 * 1024 * 1024;//1 MB
+    private static final AtomicInteger CONTEXT_LAST_ID = new AtomicInteger(1);
+    private static final int CONNECTION_TIMEOUT = 30000;
+    private final static AtomicInteger SELECTOR_THREAD_INDEX = new AtomicInteger(0);
 
     private ConnectionState connectionState;
     private int failedConnectionCount;
@@ -41,23 +38,35 @@ public class TcpContext implements PyroClientListener {
     private final int contextId;
     private int sentPackets;
 
-    private PyroSelector selector;
+    private final PyroSelector selector;
     private PyroClient client;
     private ByteBufferDesc restOfTheData;
     private int lastPacketLength;
 
-    private TcpContextCallback callback;
+    private final TcpContextCallback callback;
 
     public TcpContext(MTProto proto, String ip, int port, TcpContextCallback callback) {
-        this.contextId = contextLastId.incrementAndGet();
+        this.contextId = CONTEXT_LAST_ID.incrementAndGet();
         this.connectionState = ConnectionState.TcpConnectionStageIdle;
         this.TAG = "MTProto#" + proto.getInstanceIndex() + "#Transport" + this.contextId;
         this.ip = ip;
         this.port = port;
         this.callback = callback;
         this.selector = new PyroSelector();
-        this.selector.spawnNetworkThread("Selector Thread");
+        this.selector.spawnNetworkThread("Selector-Thread#" + SELECTOR_THREAD_INDEX.getAndIncrement());
         BuffersStorage.getInstance();
+    }
+    
+    public void close() {
+        try {
+            this.selector.close();
+        } catch (IOException ex) {
+            Logger.e(ex.getMessage(), ex);
+        }
+    }
+
+    private static int generateChannelToken() {
+        return NextChannelToken++;
     }
 
     private void readData(ByteBuffer buffer) throws Exception {
@@ -65,39 +74,39 @@ public class TcpContext implements PyroClientListener {
         buffer.rewind();
 
         ByteBuffer parseLaterBuffer = null;
-        if (restOfTheData != null) {
-            if (lastPacketLength == 0) {
-                if ((restOfTheData.capacity() - restOfTheData.position()) >= buffer.limit()) {
-                    restOfTheData.limit(restOfTheData.position() + buffer.limit());
-                    restOfTheData.put(buffer);
+        if (this.restOfTheData != null) {
+            if (this.lastPacketLength == 0) {
+                if ((this.restOfTheData.capacity() - this.restOfTheData.position()) >= buffer.limit()) {
+                    this.restOfTheData.limit(this.restOfTheData.position() + buffer.limit());
+                    this.restOfTheData.put(buffer);
                     buffer = restOfTheData.buffer;
                 } else {
                     final ByteBufferDesc newBuffer = BuffersStorage.getInstance().getFreeBuffer(restOfTheData.limit() + buffer.limit());
-                    restOfTheData.rewind();
-                    newBuffer.put(restOfTheData.buffer);
+                    this.restOfTheData.rewind();
+                    newBuffer.put(this.restOfTheData.buffer);
                     newBuffer.put(buffer);
                     buffer = newBuffer.buffer;
                     BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
-                    restOfTheData = newBuffer;
+                    this.restOfTheData = newBuffer;
                 }
             } else {
                 final int len;
-                if ((lastPacketLength - restOfTheData.position()) <= buffer.limit()) {
-                    len = lastPacketLength - restOfTheData.position();
+                if ((this.lastPacketLength - this.restOfTheData.position()) <= buffer.limit()) {
+                    len = this.lastPacketLength - this.restOfTheData.position();
                 } else {
                     len = buffer.limit();
                 }
                 final int oldLimit = buffer.limit();
                 buffer.limit(len);
-                restOfTheData.put(buffer);
+                this.restOfTheData.put(buffer);
                 buffer.limit(oldLimit);
-                if (restOfTheData.position() == lastPacketLength) {
+                if (this.restOfTheData.position() == this.lastPacketLength) {
                     if (buffer.hasRemaining()) {
                         parseLaterBuffer = buffer;
                     } else {
                         parseLaterBuffer = null;
                     }
-                    buffer = restOfTheData.buffer;
+                    buffer = this.restOfTheData.buffer;
                 } else {
                     return;
                 }
@@ -107,10 +116,10 @@ public class TcpContext implements PyroClientListener {
         buffer.rewind();
 
         while (buffer.hasRemaining()) {
-            if (!hasSomeDataSinceLastConnect) {
-                client.setTimeout(CONNECTION_TIMEOUT * 30);
+            if (!this.hasSomeDataSinceLastConnect) {
+                this.client.setTimeout(CONNECTION_TIMEOUT * 30);
             }
-            hasSomeDataSinceLastConnect = true;
+            this.hasSomeDataSinceLastConnect = true;
 
             final int currentPacketLength;
             buffer.mark();
@@ -119,11 +128,11 @@ public class TcpContext implements PyroClientListener {
             if ((fByte & (1 << 7)) != 0) {
                 buffer.reset();
                 if (buffer.remaining() < 4) {
-                    final ByteBufferDesc reuseLater = restOfTheData;
-                    restOfTheData = BuffersStorage.getInstance().getFreeBuffer(16384);
-                    restOfTheData.put(buffer);
-                    restOfTheData.limit(restOfTheData.position());
-                    lastPacketLength = 0;
+                    final ByteBufferDesc reuseLater = this.restOfTheData;
+                    this.restOfTheData = BuffersStorage.getInstance().getFreeBuffer(16384);
+                    this.restOfTheData.put(buffer);
+                    this.restOfTheData.limit(this.restOfTheData.position());
+                    this.lastPacketLength = 0;
                     if (reuseLater != null) {
                         BuffersStorage.getInstance().reuseFreeBuffer(reuseLater);
                     }
@@ -139,17 +148,17 @@ public class TcpContext implements PyroClientListener {
             if (fByte == 0x7f) {
                 buffer.reset();
                 if (buffer.remaining() < 4) {
-                    if ((restOfTheData == null) || ((restOfTheData != null) && (restOfTheData.position() != 0))) {
-                        final ByteBufferDesc reuseLater = restOfTheData;
-                        restOfTheData = BuffersStorage.getInstance().getFreeBuffer(16384);
-                        restOfTheData.put(buffer);
-                        restOfTheData.limit(restOfTheData.position());
-                        lastPacketLength = 0;
+                    if ((this.restOfTheData == null) || ((this.restOfTheData != null) && (this.restOfTheData.position() != 0))) {
+                        final ByteBufferDesc reuseLater = this.restOfTheData;
+                        this.restOfTheData = BuffersStorage.getInstance().getFreeBuffer(16384);
+                        this.restOfTheData.put(buffer);
+                        this.restOfTheData.limit(this.restOfTheData.position());
+                        this.lastPacketLength = 0;
                         if (reuseLater != null) {
                             BuffersStorage.getInstance().reuseFreeBuffer(reuseLater);
                         }
                     } else {
-                        restOfTheData.position(restOfTheData.limit());
+                        this.restOfTheData.position(this.restOfTheData.limit());
                     }
                     break;
                 }
@@ -173,19 +182,19 @@ public class TcpContext implements PyroClientListener {
 
                 ByteBufferDesc reuseLater = null;
                 final int len = currentPacketLength + ((fByte == 0x7f) ? 4 : 1);
-                if ((restOfTheData != null) && (restOfTheData.capacity() < len)) {
-                    reuseLater = restOfTheData;
-                    restOfTheData = null;
+                if ((this.restOfTheData != null) && (this.restOfTheData.capacity() < len)) {
+                    reuseLater = this.restOfTheData;
+                    this.restOfTheData = null;
                 }
-                if (restOfTheData == null) {
+                if (this.restOfTheData == null) {
                     buffer.reset();
-                    restOfTheData = BuffersStorage.getInstance().getFreeBuffer(len);
-                    restOfTheData.put(buffer);
+                    this.restOfTheData = BuffersStorage.getInstance().getFreeBuffer(len);
+                    this.restOfTheData.put(buffer);
                 } else {
-                    restOfTheData.position(restOfTheData.limit());
-                    restOfTheData.limit(len);
+                    this.restOfTheData.position(restOfTheData.limit());
+                    this.restOfTheData.limit(len);
                 }
-                lastPacketLength = len;
+                this.lastPacketLength = len;
                 if (reuseLater != null) {
                     BuffersStorage.getInstance().reuseFreeBuffer(reuseLater);
                 }
@@ -210,14 +219,14 @@ public class TcpContext implements PyroClientListener {
                 BuffersStorage.getInstance().reuseFreeBuffer(toProceed);
             }
 
-            if (restOfTheData != null) {
-                if (((lastPacketLength != 0) && (restOfTheData.position() == lastPacketLength)) || ((lastPacketLength == 0) && !restOfTheData.hasRemaining())) {
+            if (this.restOfTheData != null) {
+                if (((this.lastPacketLength != 0) && (this.restOfTheData.position() == this.lastPacketLength)) || ((this.lastPacketLength == 0) && !this.restOfTheData.hasRemaining())) {
                     BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
-                    restOfTheData = null;
+                    this.restOfTheData = null;
                 } else {
-                    restOfTheData.compact();
-                    restOfTheData.limit(restOfTheData.position());
-                    restOfTheData.position(0);
+                    this.restOfTheData.compact();
+                    this.restOfTheData.limit(this.restOfTheData.position());
+                    this.restOfTheData.position(0);
                 }
             }
 
@@ -250,14 +259,14 @@ public class TcpContext implements PyroClientListener {
         if (buff == null) {
             return;
         }
-        selector.scheduleTask(() -> {
-            if ((connectionState == ConnectionState.TcpConnectionStageIdle) ||
-                    (connectionState == ConnectionState.TcpConnectionStageReconnecting) ||
-                    (connectionState == ConnectionState.TcpConnectionStageSuspended) || (client == null)) {
-                connect();
+        this.selector.scheduleTask(() -> {
+            if ((this.connectionState == ConnectionState.TcpConnectionStageIdle) ||
+                (this.connectionState == ConnectionState.TcpConnectionStageReconnecting) ||
+                (this.connectionState == ConnectionState.TcpConnectionStageSuspended) || (client == null)) {
+                this.connect();
             }
 
-            if ((client == null) || client.isDisconnected()) {
+            if ((this.client == null) || this.client.isDisconnected()) {
                 if (canReuse) {
                     BuffersStorage.getInstance().reuseFreeBuffer(buff);
                 }
@@ -273,14 +282,14 @@ public class TcpContext implements PyroClientListener {
             } else {
                 bufferLen += 4;
             }
-            if (isFirstPackage) {
+            if (this.isFirstPackage) {
                 bufferLen++;
             }
 
             final ByteBufferDesc buffer = BuffersStorage.getInstance().getFreeBuffer(bufferLen);
-            if (isFirstPackage) {
+            if (this.isFirstPackage) {
                 buffer.writeByte((byte) 0xef);
-                isFirstPackage = false;
+                this.isFirstPackage = false;
             }
             if (packetLength < 0x7f) {
                 if (reportAck) {
@@ -302,8 +311,8 @@ public class TcpContext implements PyroClientListener {
 
             buffer.rewind();
 
-            TcpContext.this.sentPackets++;
-            client.write(buffer);
+            this.sentPackets++;
+            this.client.write(buffer);
         });
     }
 
@@ -311,31 +320,31 @@ public class TcpContext implements PyroClientListener {
 
     @Override
     public void connectedClient(PyroClient client) {
-        connectionState = ConnectionState.TcpConnectionStageConnected;
-        channelToken = generateChannelToken();
-        Logger.d(TcpContext.this.TAG, "Client connected: " + channelToken);
+        this.connectionState = ConnectionState.TcpConnectionStageConnected;
+        this.channelToken = generateChannelToken();
+        Logger.d(TcpContext.this.TAG, "Client connected: " + this.channelToken);
     }
 
     @Override
     public void unconnectableClient(PyroClient client, Exception cause) {
-        handleDisconnect(client, false);
+        this.handleDisconnect(client, false);
     }
 
     @Override
     public void droppedClient(PyroClient client, IOException cause) {
-        handleDisconnect(client, (cause instanceof SocketTimeoutException));
+        this.handleDisconnect(client, (cause instanceof SocketTimeoutException));
     }
 
     @Override
     public void disconnectedClient(PyroClient client) {
-        handleDisconnect(client, false);
+        this.handleDisconnect(client, false);
     }
 
     @Override
     public void receivedData(PyroClient client, ByteBuffer data) {
         try {
-            failedConnectionCount = 0;
-            readData(data);
+            this.failedConnectionCount = 0;
+            this.readData(data);
         } catch (Exception e) {
             Logger.e(TcpContext.this.TAG, e);
             reconnect();
@@ -350,45 +359,45 @@ public class TcpContext implements PyroClientListener {
     //endregion PyroClient Overrides
 
     private synchronized void handleDisconnect(PyroClient client, boolean timeout) {
-        synchronized (timerSync) {
-            if (reconnectTimer != null) {
-                reconnectTimer.cancel();
-                reconnectTimer = null;
+        synchronized(this.timerSync) {
+            if (this.reconnectTimer != null) {
+                this.reconnectTimer.cancel();
+                this.reconnectTimer = null;
             }
         }
 
-        isFirstPackage = true;
-        if (restOfTheData != null) {
+        this.isFirstPackage = true;
+        if (this.restOfTheData != null) {
             BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
-            restOfTheData = null;
+            this.restOfTheData = null;
         }
-        channelToken = 0;
-        lastPacketLength = 0;
-        if ((connectionState != ConnectionState.TcpConnectionStageSuspended) && (connectionState != ConnectionState.TcpConnectionStageIdle)) {
-            connectionState = ConnectionState.TcpConnectionStageIdle;
+        this.channelToken = 0;
+        this.lastPacketLength = 0;
+        if ((this.connectionState != ConnectionState.TcpConnectionStageSuspended) && (this.connectionState != ConnectionState.TcpConnectionStageIdle)) {
+            this.connectionState = ConnectionState.TcpConnectionStageIdle;
         }
 
-        callback.onChannelBroken(TcpContext.this);
+        this.callback.onChannelBroken(TcpContext.this);
 
-        if (connectionState == ConnectionState.TcpConnectionStageIdle) {
-            failedConnectionCount++;
-            if (failedConnectionCount == 1) {
-                if (hasSomeDataSinceLastConnect) {
-                    willRetryConnectCount = 5;
+        if (this.connectionState == ConnectionState.TcpConnectionStageIdle) {
+            this.failedConnectionCount++;
+            if (this.failedConnectionCount == 1) {
+                if (this.hasSomeDataSinceLastConnect) {
+                    this.willRetryConnectCount = 5;
                 } else {
-                    willRetryConnectCount = 1;
+                    this.willRetryConnectCount = 1;
                 }
             }
-            Logger.d(TcpContext.this.TAG, "Reconnect " + ip + ":" + port + " " + TcpContext.this);
+            Logger.d(TcpContext.this.TAG, "Reconnect " + this.ip + ":" + this.port + " " + TcpContext.this);
             try {
-                synchronized (timerSync) {
-                    reconnectTimer = new Timer();
-                    reconnectTimer.schedule(new TimerTask() {
+                synchronized(this.timerSync) {
+                    this.reconnectTimer = new Timer();
+                    this.reconnectTimer.schedule(new TimerTask() {
                         @Override
                         public void run() {
                             selector.scheduleTask(() -> {
                                 try {
-                                    synchronized (timerSync) {
+                                    synchronized(timerSync) {
                                         if (reconnectTimer != null) {
                                             reconnectTimer.cancel();
                                             reconnectTimer = null;
@@ -409,18 +418,18 @@ public class TcpContext implements PyroClientListener {
     }
 
     public void connect() {
-        selector.scheduleTask(() -> {
-            if (((connectionState == ConnectionState.TcpConnectionStageConnected) || (connectionState == ConnectionState.TcpConnectionStageConnecting)) && (client != null)) {
+        this.selector.scheduleTask(() -> {
+            if (((this.connectionState == ConnectionState.TcpConnectionStageConnected) || (this.connectionState == ConnectionState.TcpConnectionStageConnecting)) && (this.client != null)) {
                 return;
             }
 
-            connectionState = ConnectionState.TcpConnectionStageConnecting;
+            this.connectionState = ConnectionState.TcpConnectionStageConnecting;
             try {
                 try {
-                    synchronized (timerSync) {
-                        if (reconnectTimer != null) {
-                            reconnectTimer.cancel();
-                            reconnectTimer = null;
+                    synchronized(this.timerSync) {
+                        if (this.reconnectTimer != null) {
+                            this.reconnectTimer.cancel();
+                            this.reconnectTimer = null;
                         }
                     }
                 } catch (Exception e2) {
@@ -428,22 +437,22 @@ public class TcpContext implements PyroClientListener {
                 }
 
                 Logger.d(TcpContext.this.TAG, String.format(TcpContext.this + " Connecting (%s:%d)", ip, port));
-                isFirstPackage = true;
-                if (restOfTheData != null) {
+                this.isFirstPackage = true;
+                if (this.restOfTheData != null) {
                     BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
-                    restOfTheData = null;
+                    this.restOfTheData = null;
                 }
-                lastPacketLength = 0;
-                hasSomeDataSinceLastConnect = false;
-                if (client != null) {
-                    client.removeListener(TcpContext.this);
-                    client.dropConnection();
-                    client = null;
+                this.lastPacketLength = 0;
+                this.hasSomeDataSinceLastConnect = false;
+                if (this.client != null) {
+                    this.client.removeListener(TcpContext.this);
+                    this.client.dropConnection();
+                    this.client = null;
                 }
-                client = selector.connect(new InetSocketAddress(ip, port));
-                client.addListener(TcpContext.this);
-                client.setTimeout(CONNECTION_TIMEOUT);
-                selector.wakeup();
+                this.client = this.selector.connect(new InetSocketAddress(ip, port));
+                this.client.addListener(TcpContext.this);
+                this.client.setTimeout(CONNECTION_TIMEOUT);
+                this.selector.wakeup();
             } catch (Exception e) {
                 handleConnectionError(e);
             }
@@ -452,27 +461,27 @@ public class TcpContext implements PyroClientListener {
 
     private void handleConnectionError(Exception e) {
         try {
-            synchronized (timerSync) {
-                if (reconnectTimer != null) {
-                    reconnectTimer.cancel();
-                    reconnectTimer = null;
+            synchronized(this.timerSync) {
+                if (this.reconnectTimer != null) {
+                    this.reconnectTimer.cancel();
+                    this.reconnectTimer = null;
                 }
             }
         } catch (Exception e2) {
             Logger.e(TcpContext.this.TAG, e2);
         }
-        connectionState = ConnectionState.TcpConnectionStageReconnecting;
-        callback.onChannelBroken(TcpContext.this);
-        failedConnectionCount++;
-        if (failedConnectionCount == 1) {
-            if (hasSomeDataSinceLastConnect) {
-                willRetryConnectCount = 3;
+        this.connectionState = ConnectionState.TcpConnectionStageReconnecting;
+        this.callback.onChannelBroken(TcpContext.this);
+        this.failedConnectionCount++;
+        if (this.failedConnectionCount == 1) {
+            if (this.hasSomeDataSinceLastConnect) {
+                this.willRetryConnectCount = 3;
             } else {
-                willRetryConnectCount = 1;
+                this.willRetryConnectCount = 1;
             }
         }
-        if (failedConnectionCount > willRetryConnectCount) {
-            failedConnectionCount = 0;
+        if (this.failedConnectionCount > this.willRetryConnectCount) {
+            this.failedConnectionCount = 0;
         }
 
         if (e != null) {
@@ -480,8 +489,8 @@ public class TcpContext implements PyroClientListener {
         }
         Logger.d(TcpContext.this.TAG, "Reconnect " + ip + ":" + port + " " + TcpContext.this);
         try {
-            reconnectTimer = new Timer();
-            reconnectTimer.schedule(new TimerTask() {
+            this.reconnectTimer = new Timer();
+            this.reconnectTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     selector.scheduleTask(new Runnable() {
@@ -501,55 +510,56 @@ public class TcpContext implements PyroClientListener {
                         }
                     });
                 }
-            }, (failedConnectionCount >= 3) ? 500 : 300, (failedConnectionCount >= 3) ? 500 : 300);
+            }, (this.failedConnectionCount >= 3) ? 500 : 300, (this.failedConnectionCount >= 3) ? 500 : 300);
         } catch (Exception e3) {
             Logger.e(TcpContext.this.TAG, e3);
         }
     }
 
     private void reconnect() {
-        suspendConnection(false);
-        connectionState = ConnectionState.TcpConnectionStageReconnecting;
-        connect();
+        this.suspendConnection(false);
+        this.connectionState = ConnectionState.TcpConnectionStageReconnecting;
+        this.connect();
     }
 
     public void suspendConnection(boolean task) {
         if (task) {
-            selector.scheduleTask(new Runnable() {
+            this.selector.scheduleTask(new Runnable() {
                 @Override
                 public void run() {
                     suspendConnectionInternal();
                 }
             });
         } else {
-            suspendConnectionInternal();
+            this.suspendConnectionInternal();
         }
     }
 
     private void suspendConnectionInternal() {
-        synchronized (timerSync) {
-            if (reconnectTimer != null) {
-                reconnectTimer.cancel();
-                reconnectTimer = null;
+        synchronized(this.timerSync) {
+            if (this.reconnectTimer != null) {
+                this.reconnectTimer.cancel();
+                this.reconnectTimer = null;
             }
         }
-        if ((connectionState == ConnectionState.TcpConnectionStageIdle) || (connectionState == ConnectionState.TcpConnectionStageSuspended)) {
+        if ((this.connectionState == ConnectionState.TcpConnectionStageIdle) || (this.connectionState == ConnectionState.TcpConnectionStageSuspended)) {
             return;
         }
         Logger.d(TcpContext.this.TAG, "suspend connnection " + TcpContext.this);
-        connectionState = ConnectionState.TcpConnectionStageSuspended;
-        if (client != null) {
-            client.removeListener(TcpContext.this);
-            client.dropConnection();
-            client = null;
+        this.connectionState = ConnectionState.TcpConnectionStageSuspended;
+        if (this.client != null) {
+            this.client.removeListener(TcpContext.this);
+            this.client.dropConnection();
+            this.client = null;
         }
-        callback.onChannelBroken(TcpContext.this);
-        isFirstPackage = true;
-        if (restOfTheData != null) {
+        this.callback.onChannelBroken(TcpContext.this);
+        this.isFirstPackage = true;
+        if (this.restOfTheData != null) {
             BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
-            restOfTheData = null;
+            this.restOfTheData = null;
         }
-        lastPacketLength = 0;
-        channelToken = 0;
+        this.lastPacketLength = 0;
+        this.channelToken = 0;
     }
+
 }

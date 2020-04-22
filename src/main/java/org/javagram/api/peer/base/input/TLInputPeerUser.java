@@ -46,6 +46,7 @@ public class TLInputPeerUser extends TLAbsInputPeer {
     }
 
     public void setUserId(int userId) {
+        this.id = userId;
         this.userId = userId;
     }
 

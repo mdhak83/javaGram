@@ -18,7 +18,7 @@ public abstract class AbstractUsersHandler implements IUsersHandler {
     
     @Override
     public final void onUsers(List<TLAbsUser> users) {
-        users.stream().filter((user) -> (user != null)).forEachOrdered((user) -> {
+        users.stream().filter(user -> user != null).forEachOrdered((user) -> {
             this.config.getDatabaseManager().processUser(user);
         });
         this.onUsersCustom(users);

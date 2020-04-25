@@ -8,7 +8,9 @@ import java.io.OutputStream;
 import org.javagram.api.page.base.TLPageCaption;
 
 /**
+ * pageBlockPhoto
  * A photo
+ * pageBlockPhoto#1759c560 flags:# photo_id:long caption:PageCaption url:flags.0?string webpage_id:flags.0?long = PageBlock;
  */
 public class TLPageBlockPhoto extends TLAbsPageBlock {
 
@@ -19,10 +21,25 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
 
     private static final int FLAG_URL = 0x00000001; // 0
 
+    /**
+     * Photo ID
+     */
     private long photoId;
+    
+    /**
+     * Caption
+     */
     private TLPageCaption caption;
+    
+    /**
+     * HTTP URL of page the photo leads to when clicked
+     */
     private String url;
-    private String webpageId;
+    
+    /**
+     * ID of preview of the page the photo leads to when clicked
+     */
+    private long webpageId;
 
     public TLPageBlockPhoto() {
         super();
@@ -57,11 +74,11 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
         this.url = url;
     }
 
-    public String getWebpageId() {
+    public long getWebpageId() {
         return webpageId;
     }
 
-    public void setWebpageId(String webpageId) {
+    public void setWebpageId(long webpageId) {
         this.webpageId = webpageId;
     }
     
@@ -73,7 +90,7 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
         StreamingUtils.writeTLObject(this.caption, stream);
         if ((this.flags & FLAG_URL) != 0) {
             StreamingUtils.writeTLString(this.url, stream);
-            StreamingUtils.writeTLString(this.webpageId, stream);
+            StreamingUtils.writeLong(this.webpageId, stream);
         }
     }
 
@@ -84,7 +101,7 @@ public class TLPageBlockPhoto extends TLAbsPageBlock {
         this.caption = StreamingUtils.readTLObject(stream, context, TLPageCaption.class);
         if ((this.flags & FLAG_URL) != 0) {
             this.url = StreamingUtils.readTLString(stream);
-            this.webpageId = StreamingUtils.readTLString(stream);
+            this.webpageId = StreamingUtils.readLong(stream);
         }
     }
 

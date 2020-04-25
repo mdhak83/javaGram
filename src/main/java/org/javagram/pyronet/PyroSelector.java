@@ -11,11 +11,12 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 public class PyroSelector {
 
-    private final static int DEFAULT_BUFFER_SIZE = 64 * 1024;
+    private final static int DEFAULT_BUFFER_SIZE = 256 * 1024;
     private final Selector nioSelector;
     private final boolean DoNotCheckNetworkThread;
     private Thread networkThread;
     private boolean closeNetworkThread = false;
+    protected final int bufferSize;
     protected final ByteBuffer networkBuffer;
     private BlockingQueue<Runnable> tasks = new LinkedBlockingDeque<>();
     
@@ -25,6 +26,7 @@ public class PyroSelector {
     
     public PyroSelector(int bufferSize, boolean doNotCheckNetworkThread) {
         this.DoNotCheckNetworkThread = doNotCheckNetworkThread;
+        this.bufferSize = bufferSize;
         this.networkBuffer = ByteBuffer.allocateDirect(bufferSize);
         try {
             this.nioSelector = Selector.open();

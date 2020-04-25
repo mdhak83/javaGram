@@ -10,7 +10,6 @@ import java.nio.ByteOrder;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import org.javagram.pyronet.PyroClient;
 import org.javagram.pyronet.PyroClientListener;
 import org.javagram.pyronet.PyroSelector;

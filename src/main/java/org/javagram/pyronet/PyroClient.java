@@ -14,7 +14,6 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import jawnae.pyronet.ByteStream;
 
 public class PyroClient {
 
@@ -432,8 +431,8 @@ public class PyroClient {
         channel.socket().setReuseAddress(false);
         channel.socket().setKeepAlive(false);
         channel.socket().setTcpNoDelay(true);
-        channel.socket().setReceiveBufferSize(PyroSelector.BUFFER_SIZE);
-        channel.socket().setSendBufferSize(PyroSelector.BUFFER_SIZE);
+        channel.socket().setReceiveBufferSize(selector.bufferSize);
+        channel.socket().setSendBufferSize(selector.bufferSize);
         int ops = SelectionKey.OP_READ;
         if (connect) {
             ops |= SelectionKey.OP_CONNECT;

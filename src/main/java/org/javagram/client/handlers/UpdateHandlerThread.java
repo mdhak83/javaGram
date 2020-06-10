@@ -14,7 +14,8 @@ public class UpdateHandlerThread extends Thread {
     private final PriorityQueue<UpdateWrapper> updates = new PriorityQueue<>(new UpdateWrapperComparator());
 
     protected UpdateHandlerThread(IUpdatesHandler updatesHandler) {
-        super();
+        super("UpdateHandlerThread");
+        this.setPriority(9);
         this.updatesHandler = updatesHandler;
     }
 
@@ -34,7 +35,7 @@ public class UpdateHandlerThread extends Thread {
     @Override
     public void run() {
         UpdateWrapper update;
-        while(this.isAlive) {
+        while (this.isAlive) {
             try {
                 synchronized(this.updates) {
                     update = this.updates.poll();
@@ -54,6 +55,7 @@ public class UpdateHandlerThread extends Thread {
                 BotLogger.error(LOGTAG, e);
             }
         }
+        BotLogger.info(LOGTAG, "Quitting UpdateHandlerThread.");
     }
 
 }

@@ -25,6 +25,7 @@ public class TelegramClient {
     public TelegramClient(MyTLAppConfiguration.Builder configBuilder) {
         this.instanceNumber = CURRENT_INSTANCES_NUMBER.incrementAndGet();
         this.logtag = "[TelegramClient#" + this.instanceNumber + "]";
+        this.initializeLogging();
         BotLogger.info(this.logtag, "Creating");
         if (configBuilder == null) {
             throw new NullPointerException("The complete configuration must be provided.");
@@ -35,7 +36,6 @@ public class TelegramClient {
             this.config.setDifferenceParametersService(new DifferenceParametersService());
         }
         this.config.getDifferenceParametersService().build(this.config);
-        this.initializeLogging();
         BotLogger.info(this.logtag, "Created");
     }
     

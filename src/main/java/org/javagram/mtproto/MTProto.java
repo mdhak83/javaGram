@@ -807,6 +807,10 @@ public class MTProto {
                     if (MTProto.this.contexts.size() >= MTProto.this.desiredConnectionCount) {
                         try {
                             MTProto.this.contexts.wait();
+                            if (Logger.LOG_THREADS) {
+                                Logger.d(MTProto.this.logtag, this.getName() + " : awake.");
+                            }
+                            Logger.d(logtag, logtag);
                             if (MTProto.this.isClosed.get()) {
                                 break;
                             }
@@ -831,7 +835,6 @@ public class MTProto {
             MTProto.this.contexts.forEach(context -> {
                 context.close();
             });
-            
         }
     }
 
@@ -905,8 +908,10 @@ public class MTProto {
                         MTProto.this.connectionRate.onConnectionFailure(MTProto.this.contextConnectionId.get(context.getContextId()));
                     }
                     MTProto.this.contexts.remove(context);
+                    // Informs ConnectionFixerThread
                     MTProto.this.contexts.notifyAll();
                     MTProto.this.scheduler.onConnectionDies(context.getContextId());
+                    //context.close();
                 }
             }
         }
@@ -942,6 +947,7 @@ public class MTProto {
             }
             MTProto.this.scheduler.onConnectionDies(context.getContextId());
             requestSchedule();
+            //context.close();
         }
 
         @Override

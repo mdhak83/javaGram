@@ -2,12 +2,6 @@ package org.javagram.mtproto.log;
 
 import org.javagram.utils.LogInterface;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 3:54
- */
 public class Logger {
 
     public static final boolean LOG_THREADS = true;

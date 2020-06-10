@@ -8,7 +8,6 @@ import org.javagram.api.updates.base.TLUpdatesState;
 import org.javagram.api.user.base.TLAbsUser;
 import org.javagram.utils.StreamingUtils;
 import org.javagram.api._primitives.TLContext;
-import org.javagram.api._primitives.TLVector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

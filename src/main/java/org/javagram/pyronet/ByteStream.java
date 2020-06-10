@@ -1,10 +1,10 @@
 package org.javagram.pyronet;
 
+import org.javagram.mtproto.transport.BuffersStorage;
+import org.javagram.mtproto.transport.ByteBufferDesc;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import org.javagram.mtproto.transport.BuffersStorage;
-import org.javagram.mtproto.transport.ByteBufferDesc;
 
 public class ByteStream {
 
@@ -17,9 +17,7 @@ public class ByteStream {
     }
 
     /**
-     * Appends the ByteBuffer instance to the ByteStream.The bytes are not
-     * copied, so do not modify the contents of the ByteBuffer.
-     *
+     * Appends the ByteBuffer instance to the ByteStream.The bytes are not copied, so do not modify the contents of the ByteBuffer.
      * @param buf
      */
     public void append(ByteBufferDesc buf) {
@@ -31,21 +29,20 @@ public class ByteStream {
 
     /**
      * Returns whether there are any bytes pending in this stream
-     *
-     * @return
+     * @return 
      */
     public boolean hasData() {
         final int size = this.queue.size();
-        if (this.queue.stream().anyMatch((aQueue) -> (aQueue.hasRemaining()))) {
-            return true;
+        for (ByteBufferDesc aQueue : this.queue) {
+            if (aQueue.hasRemaining()) {
+                return true;
+            }
         }
         return false;
     }
 
     /**
-     * Fills the specified buffer with as much bytes as possible.When N bytes
-     * are read, the buffer position will be increased by N
-     *
+     * Fills the specified buffer with as much bytes as possible.When N bytes are read, the buffer position will be increased by N
      * @param dst
      */
     public void get(ByteBuffer dst) {
@@ -55,15 +52,12 @@ public class ByteStream {
 
         for (ByteBufferDesc bufferDesc : this.queue) {
             ByteBuffer data = bufferDesc.buffer.slice();
-
             if (data.remaining() > dst.remaining()) {
                 data.limit(dst.remaining());
                 dst.put(data);
                 break;
             }
-
             dst.put(data);
-
             if (!dst.hasRemaining()) {
                 break;
             }
@@ -72,28 +66,22 @@ public class ByteStream {
 
     /**
      * Discards the specified amount of bytes from the stream.
-     *
      * @param count
-     * @throws PyroException if it failed to discard the specified number of
-     * bytes
+     * @throws PyroException if it failed to discard the specified number of bytes
      */
     public void discard(int count) {
         int original = count;
-
         while (count > 0) {
             ByteBufferDesc data = this.queue.get(0);
-
             if (count < data.buffer.remaining()) {
                 data.position(data.position() + count);
                 count = 0;
                 break;
             }
-
             this.queue.remove(0);
             BuffersStorage.getInstance().reuseFreeBuffer(data);
             count -= data.buffer.remaining();
         }
-
         if (count != 0) {
             throw new PyroException("discarded " + (original - count) + "/" + original + " bytes");
         }

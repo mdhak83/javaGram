@@ -4,40 +4,39 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class PyroSelector {
 
-    private final static int DEFAULT_BUFFER_SIZE = 256 * 1024;
-    private final Selector nioSelector;
-    private final boolean DoNotCheckNetworkThread;
+    public static final int BUFFER_SIZE = 16 * 1024;
     private Thread networkThread;
-    private boolean closeNetworkThread = false;
-    protected final int bufferSize;
+    private final Selector nioSelector;
     protected final ByteBuffer networkBuffer;
     private BlockingQueue<Runnable> tasks = new LinkedBlockingDeque<>();
-    
+
     public PyroSelector() {
-        this(DEFAULT_BUFFER_SIZE, false);
-    }
-    
-    public PyroSelector(int bufferSize, boolean doNotCheckNetworkThread) {
-        this.DoNotCheckNetworkThread = doNotCheckNetworkThread;
-        this.bufferSize = bufferSize;
-        this.networkBuffer = ByteBuffer.allocateDirect(bufferSize);
+        this.networkBuffer = this.malloc(BUFFER_SIZE);
         try {
             this.nioSelector = Selector.open();
-        } catch (IOException ex) {
-            throw new PyroException("Failed to open a selector?!", ex);
+        } catch (IOException exc) {
+            throw new PyroException("Failed to open a selector?!", exc);
         }
         this.networkThread = Thread.currentThread();
     }
 
-    final boolean isNetworkThread() {
-        return DoNotCheckNetworkThread || (this.networkThread == Thread.currentThread());
+    public ByteBuffer malloc(int size) {
+        return ByteBuffer.allocate(size);
+    }
+
+    public final boolean isNetworkThread() {
+        return this.networkThread == Thread.currentThread();
     }
 
     public final Thread networkThread() {
@@ -45,10 +44,8 @@ public class PyroSelector {
     }
 
     public final void checkThread() {
-        if (!DoNotCheckNetworkThread) {
-            if (!this.isNetworkThread()) {
-                throw new PyroException("call from outside the network-thread, you must schedule tasks");
-            }
+        if (!this.isNetworkThread()) {
+            throw new PyroException("call from outside the network-thread, you must schedule tasks");
         }
     }
 
@@ -66,8 +63,10 @@ public class PyroSelector {
 
     public void select(long eventTimeout) {
         this.checkThread();
+
         this.executePendingTasks();
         this.performNioSelect(eventTimeout);
+
         final long now = System.currentTimeMillis();
         this.handleSelectedKeys(now);
         this.handleSocketTimeouts(now);
@@ -108,8 +107,8 @@ public class PyroSelector {
         this.nioSelector.keys().stream().filter((key) -> (key.channel() instanceof SocketChannel)).map((key) -> (PyroClient) key.attachment()).filter((client) -> (client.didTimeout(now))).forEachOrdered((client) -> {
             try {
                 throw new SocketTimeoutException("PyroNet detected NIO timeout");
-            } catch (SocketTimeoutException exc) {
-                client.onConnectionError(exc);
+            } catch (SocketTimeoutException ex) {
+                client.onConnectionError(ex);
             }
         });
     }
@@ -120,32 +119,35 @@ public class PyroSelector {
         // N.B.
         // -- updating this non-volatile field is thread-safe
         // -- because the current thread can see it (causing it
-        // -- to become UNACCESSIBLE), and all other threads
+        // -- to become UNACCESSIBLE), and all other threads 
         // -- that might not see the change will
         // -- (continue to) block access to this selector
         this.networkThread = null;
 
-        Thread t = new Thread(() -> {
-            // spawned thread can access this selector
-            //
-            // N.B.
-            // -- updating this non-volatile field is thread-safe
-            // -- because the current thread can see it (causing it
-            // -- to become ACCESSIBLE), and all other threads
-            // -- that might not see the change will
-            // -- (continue to) block access to this selector
-            PyroSelector.this.networkThread = Thread.currentThread();
-            
-            // start select-loop
-            try {
-                while (!PyroSelector.this.closeNetworkThread) {
-                    PyroSelector.this.select();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // spawned thread can access this selector
+                //
+                // N.B.
+                // -- updating this non-volatile field is thread-safe
+                // -- because the current thread can see it (causing it
+                // -- to become ACCESSIBLE), and all other threads 
+                // -- that might not see the change will
+                // -- (continue to) block access to this selector
+                PyroSelector.this.networkThread = Thread.currentThread();
+
+                // start select-loop
+                try {
+                    while (true) {
+                        PyroSelector.this.select();
+                    }
+                } catch (Exception ex) {
+                    // this never be caused by Pyro-code
+                    throw new IllegalStateException(ex);
                 }
-            } catch (Exception ex) {
-                throw new IllegalStateException(ex);
             }
-        }, name);
-        t.start();
+        }, name).start();
     }
 
     public void scheduleTask(Runnable task) {
@@ -165,28 +167,23 @@ public class PyroSelector {
     }
 
     public void close() throws IOException {
-        if (this.networkThread != null) {
-            this.closeNetworkThread = true;
-            try {
-                this.networkThread.join();
-            } catch (InterruptedException ex) {
-            }
-        }
+        this.networkThread.interrupt();
         this.nioSelector.close();
         this.networkBuffer.clear();
-    }
+    }    
 
-    protected final SelectionKey register(SelectableChannel channel, int ops) throws IOException {
+    final SelectionKey register(SelectableChannel channel, int ops) throws IOException {
         return channel.register(this.nioSelector, ops);
     }
 
-    protected final boolean adjustInterestOp(SelectionKey key, int op, boolean state) {
+    final boolean adjustInterestOp(SelectionKey key, int op, boolean state) {
         this.checkThread();
         try {
             int ops = key.interestOps();
             boolean changed = state != ((ops & op) == op);
-            if (changed)
+            if (changed) {
                 key.interestOps(state ? (ops | op) : (ops & ~op));
+            }
             return changed;
         } catch (CancelledKeyException exc) {
             // ignore

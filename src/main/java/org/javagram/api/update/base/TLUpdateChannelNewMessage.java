@@ -99,4 +99,12 @@ public class TLUpdateChannelNewMessage extends TLAbsUpdate implements ITLUpdateC
         return "update.TLUpdateChannelNewMessage#62ba04d9";
     }
     
+    public String toLog() {
+        String ret = null;
+        if (this.message != null) {
+            ret = this.message.toLog();
+        }
+        return ret;
+    }
+    
 }

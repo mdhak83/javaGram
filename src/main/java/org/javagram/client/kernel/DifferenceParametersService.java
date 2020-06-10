@@ -1,18 +1,30 @@
 package org.javagram.client.kernel;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.javagram.MyTLAppConfiguration;
 
+/**
+ * This class maintains the current status (pts, seq, date) of all channels/chats.
+ * @author Mehdi Dhakouani
+ */
 public class DifferenceParametersService implements IDifferenceParametersService {
     
-    private final ConcurrentHashMap<Integer, DifferenceParametersService.DifferenceData> differenceDatas = new ConcurrentHashMap<>();
-    private final AtomicBoolean loaded = new AtomicBoolean(false);
-    private final Object lock = new Object();
+    /**
+     * Configuration
+     */
     private MyTLAppConfiguration config;
+    
+    /**
+     * Whether this service has loaded previous information from the database
+     */
+    private final AtomicBoolean loaded = new AtomicBoolean(false);
+    
+    /**
+     * Common (id = 0) and Channel Update States
+     */
+    private final Map<Integer, DifferenceParametersService.DifferenceData> differenceDatas = new HashMap<>();
 
     public DifferenceParametersService() { }
     
@@ -24,88 +36,116 @@ public class DifferenceParametersService implements IDifferenceParametersService
     }
 
     @Override
-    public void setNewUpdateParams(int chatId, @Nullable Integer newPts, @Nullable Integer newSeq, @NotNull Integer newDate) {
-        if (!this.differenceDatas.containsKey(chatId)) {
-            this.create(chatId);
+    public void setNewUpdateParams(int chatId, Integer newPts, Integer newSeq, Integer newDate) {
+        if (!this.isChatDataAvailable(chatId)) {
+            this.createChat(chatId);
         }
-        synchronized(this.lock) {
-            this.differenceDatas.get(chatId).pts = ((newPts == null) || (newPts == 0)) ? differenceDatas.get(chatId).pts : newPts;
-            this.differenceDatas.get(chatId).seq = ((newSeq == null) || (newSeq == 0)) ? differenceDatas.get(chatId).seq : newSeq;
-            this.differenceDatas.get(chatId).date = (newDate < differenceDatas.get(chatId).date) ? differenceDatas.get(chatId).date : newDate;
-            this.config.getDatabaseManager().updateDifferencesData(chatId, this.differenceDatas.get(chatId).pts, this.differenceDatas.get(chatId).date, this.differenceDatas.get(chatId).seq);
+        int pts, seq, date;
+        synchronized(this.differenceDatas) {
+            DifferenceData diffData = this.differenceDatas.get(chatId);
+            if ((newPts == null) || (newPts == 0)) {
+                pts = diffData.pts;
+            } else {
+                pts = newPts;
+                diffData.pts = pts;
+            }
+            if ((newSeq == null) || (newSeq == 0)) {
+                seq = diffData.seq;
+            } else {
+                seq = newSeq;
+                diffData.seq = seq;
+            }
+            if (newDate != null && newDate < diffData.date) {
+                date = diffData.date;
+            } else {
+                date = newDate;
+                diffData.date = date;
+            }
         }
+        this.config.getDatabaseManager().updateDifferencesData(chatId, pts, date, seq);
     }
 
     @Override
     public int getDate(int chatId) {
-        if (!this.differenceDatas.containsKey(chatId)) {
-            this.create(chatId);
+        if (!this.isChatDataAvailable(chatId)) {
+            this.createChat(chatId);
         }
-        return this.differenceDatas.get(chatId).date;
+        synchronized(this.differenceDatas) {
+            return this.differenceDatas.get(chatId).date;
+        }
     }
 
     @Override
     public int getPts(int chatId) {
-        if (!this.differenceDatas.containsKey(chatId)) {
-            this.create(chatId);
+        if (!this.isChatDataAvailable(chatId)) {
+            this.createChat(chatId);
         }
-        return this.differenceDatas.get(chatId).pts;
+        synchronized(this.differenceDatas) {
+            return this.differenceDatas.get(chatId).pts;
+        }
     }
 
     @Override
     public int getSeq(int chatId) {
-        if (!this.differenceDatas.containsKey(chatId)) {
-            this.create(chatId);
+        if (!this.isChatDataAvailable(chatId)) {
+            this.createChat(chatId);
         }
-        return this.differenceDatas.get(chatId).seq;
+        synchronized(this.differenceDatas) {
+            return this.differenceDatas.get(chatId).seq;
+        }
     }
 
     @Override
-    public boolean mustGetDifferences(int chatId, int pts, @Nullable Integer ptsCount, int seq, @Nullable Integer seqStart) {
-        synchronized(this.lock) {
-            boolean mustGetDifferences = false;
-            if (pts > 0) {
-                final int newPts = getPts(chatId) + ((ptsCount == null) ? 0 : ptsCount);
-                if (newPts != pts) {
-                    mustGetDifferences = true;
-                }
-            } else if (seq > 0) {
-                final int newSeqStart = (seqStart == null) ? seq : seqStart;
-                if ((newSeqStart != (getSeq(chatId) + 1)) && (newSeqStart > getSeq(chatId))) {
-                    mustGetDifferences = true;
-                }
+    public boolean mustGetDifferences(int chatId, int pts, Integer ptsCount, int seq, Integer seqStart) {
+        boolean mustGetDifferences = false;
+        if (pts > 0) {
+            final int newPts = this.getPts(chatId) + ((ptsCount == null) ? 0 : ptsCount);
+            if (newPts != pts) {
+                mustGetDifferences = true;
             }
-            return mustGetDifferences;
+        } else if (seq > 0) {
+            final int newSeqStart = (seqStart == null) ? seq : seqStart;
+            int currentSeq = this.getSeq(chatId);
+            if ((newSeqStart != (currentSeq + 1)) && (newSeqStart > currentSeq)) {
+                mustGetDifferences = true;
+            }
         }
+        return mustGetDifferences;
     }
 
     private void loadParamsFromDatabase() {
-        synchronized(this.lock) {
-            final Map<Integer, int[]> differencesDatas = this.config.getDatabaseManager().getDifferencesData();
-            differencesDatas.entrySet().forEach((entry) -> {
-                final DifferenceParametersService.DifferenceData data = new DifferenceParametersService.DifferenceData();
-                data.pts = entry.getValue()[0];
-                data.date = entry.getValue()[1];
-                data.seq = entry.getValue()[2];
+        final Map<Integer, int[]> differencesDatas = this.config.getDatabaseManager().getDifferencesData();
+        differencesDatas.entrySet().forEach((entry) -> {
+            final DifferenceParametersService.DifferenceData data = new DifferenceParametersService.DifferenceData();
+            data.pts = entry.getValue()[0];
+            data.date = entry.getValue()[1];
+            data.seq = entry.getValue()[2];
+            synchronized(this.differenceDatas) {
                 this.differenceDatas.put(entry.getKey(), data);
-            });
-            this.loaded.set(true);
-        }
+            }
+        });
+        this.loaded.set(true);
     }
 
-    private void create(int chatId) {
-        synchronized (lock) {
-            if (!this.differenceDatas.containsKey(chatId)) {
+    private void createChat(int chatId) {
+        if (!this.isChatDataAvailable(chatId)) {
+            synchronized(this.differenceDatas) {
                 this.differenceDatas.put(chatId, new DifferenceParametersService.DifferenceData());
-                this.config.getDatabaseManager().updateDifferencesData(chatId, 0, 0, 0);
             }
+            this.config.getDatabaseManager().updateDifferencesData(chatId, 0, 0, 0);
+        }
+    }
+    
+    private boolean isChatDataAvailable(int chatId) {
+        synchronized(this.differenceDatas) {
+            return this.differenceDatas.containsKey(chatId);
         }
     }
 
     private class DifferenceData {
-        int pts;
-        int date;
-        int seq;
+        protected int pts;
+        protected int date;
+        protected int seq;
 
         DifferenceData() {
             this.pts = 0;

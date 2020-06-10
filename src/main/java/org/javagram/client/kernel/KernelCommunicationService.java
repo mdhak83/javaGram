@@ -123,7 +123,6 @@ public class KernelCommunicationService implements IKernelComm {
                 } catch (Exception e) {
                     BotLogger.error(LOGTAG, "Bot threw an unexpected exception at KernelComm-doRpcCallSync", e);
                 }
-
                 return internalAnswer;
             });
             try {
@@ -830,4 +829,5 @@ public class KernelCommunicationService implements IKernelComm {
         NotificationsService.getInstance().removeObserver(this, NotificationsService.updatesInvalidated);
         super.finalize();
     }
+
 }

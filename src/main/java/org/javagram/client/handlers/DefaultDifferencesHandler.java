@@ -78,7 +78,7 @@ public class DefaultDifferencesHandler {
         }
     }
 
-    public void updateStateModification(@NotNull TLUpdatesState state, boolean isGettingDifferent) {
+    public void updateCommonUpdateState(@NotNull TLUpdatesState state, boolean isGettingDifferent) {
         if (!isGettingDifferent && (this.config.getDifferenceParametersService().getPts(0) != 0) && (this.config.getDifferenceParametersService().getSeq(0) != 0)) {
             this.getDifferences();
         } else {
@@ -97,7 +97,6 @@ public class DefaultDifferencesHandler {
     private void getChannelDifferencesInternal(int chatId, long accessHash) {
         synchronized(this.differencesLock) {
             BotLogger.info(LOGTAG, "Getting differences");
-
             final TLRequestUpdatesGetChannelDifference requestGetChannelDifference = new TLRequestUpdatesGetChannelDifference();
             requestGetChannelDifference.setFilter(new TLChannelMessagesFilterEmpty());
             final TLInputChannel inputChannel = new TLInputChannel();
@@ -131,7 +130,7 @@ public class DefaultDifferencesHandler {
         }
     }
 
-    public void updateChannelStateModification(int chatId, @Nullable Long accessHash, int pts, boolean isGettingDifferent) {
+    public void updateChannelUpdateState(int chatId, @Nullable Long accessHash, int pts, boolean isGettingDifferent) {
         if (!isGettingDifferent && (this.config.getDifferenceParametersService().getPts(chatId) != 0) && (this.config.getDifferenceParametersService().getSeq(chatId) != 0) && (accessHash != null)) {
             this.getChannelDifferences(chatId, accessHash);
         } else {
@@ -156,7 +155,7 @@ public class DefaultDifferencesHandler {
         } else if (absDifference instanceof TLDifferenceTooLong) {
             TLUpdatesState state = new TLUpdatesState();
             state.setPts(((TLDifferenceTooLong) absDifference).getPts());
-            this.updateStateModification(state, true);
+            this.updateCommonUpdateState(state, true);
         }
     }
 
@@ -173,7 +172,7 @@ public class DefaultDifferencesHandler {
     private void handleChannelDifferences(int chatId, int pts, List<TLAbsUser> users, List<TLAbsMessage> messages, List<TLAbsUpdate> updates, List<TLAbsChat> chats) {
         BotLogger.info(LOGTAG, "Handling channel differences");
         this.config.getUpdatesHandler().onTLChannelDifferences(users, messages, updates, chats);
-        this.updateChannelStateModification(chatId, null, pts, true);
+        this.updateChannelUpdateState(chatId, null, pts, true);
     }
 
     /**
@@ -184,10 +183,13 @@ public class DefaultDifferencesHandler {
     private void handleDifferences(@NotNull TLAbsDifference absDifference, @NotNull TLUpdatesState updatesState) {
         BotLogger.info(LOGTAG, "Handling differences");
         this.config.getUpdatesHandler().onTLAbsDifference(absDifference);
-        this.updateStateModification(updatesState, true);
+        this.updateCommonUpdateState(updatesState, true);
     }
 
-    @Contract(pure = true)
+    /**
+     * 
+     * @return true if Common Update State is initialized
+     */
     private boolean canGetDifferences() {
         return (this.config.getDifferenceParametersService().getPts(0) != 0) && (this.config.getDifferenceParametersService().getSeq(0) != 0);
     }

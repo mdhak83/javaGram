@@ -9,14 +9,40 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * updates.getDifference
+ * Get new @see <a href="https://core.telegram.org/api/updates">updates</a>.
+ * updates.getDifference#25939651 flags:# pts:int pts_total_limit:flags.0?int date:int qts:int = updates.Difference;
+ */
 public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
+
+    /**
+     * The constant CLASS_ID.
+     */
     public static final int CLASS_ID = 0x25939651;
 
     private static final int FLAG_PTS_TOTAL_LIMIT    = 0x00000001; // 0
 
+    /**
+     * PTS, see @see <a href="https://core.telegram.org/api/updates">updates</a>.
+     */
     private int pts;
+    
+    /**
+     * For fast updating: if provided and <code>pts + pts_total_limit &lt; remote pts</code>, @see <a href="https://core.telegram.org/constructor/updates.differenceTooLong">updates.differenceTooLong</a> will be returned.
+     * Simply tells the server to not return the difference if it is bigger than <code>pts_total_limit</code>
+     * If the remote pts is too big (> ~4000000), this field will default to 1000000
+     */
     private int ptsTotalLimit;
+
+    /**
+     * date, see @see <a href="https://core.telegram.org/api/updates">updates</a>.
+     */
     private int date;
+    
+    /**
+     * QTS, see @see <a href="https://core.telegram.org/api/updates">updates</a>.
+     */
     private int qts;
 
     public TLRequestUpdatesGetDifference() {
@@ -28,17 +54,6 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
         return CLASS_ID;
     }
 
-    @Override
-    public TLAbsDifference deserializeResponse(InputStream stream, TLContext context) throws IOException {
-        TLObject res = StreamingUtils.readTLObject(stream, context);
-        if (res == null)
-            throw new IOException("Unable to parse response");
-        if (res instanceof TLAbsDifference)
-            return (TLAbsDifference) res;
-        throw new IOException("Incorrect response type. Expected " + TLAbsDifference.class.getCanonicalName() +
-                ", got: " + res.getClass().getCanonicalName());
-    }
-
     public int getPts() {
         return pts;
     }
@@ -47,13 +62,17 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
         this.pts = pts;
     }
 
+    public boolean hasPtsTotalLimit() {
+        return this.isFlagSet(FLAG_PTS_TOTAL_LIMIT);
+    }
+    
     public int getPtsTotalLimit() {
         return ptsTotalLimit;
     }
 
     public void setPtsTotalLimit(int ptsTotalLimit) {
         this.ptsTotalLimit = ptsTotalLimit > 0 ? ptsTotalLimit : 0;
-        setPtsTotalLimit(ptsTotalLimit > 0);
+        this.setPtsTotalLimit(ptsTotalLimit > 0);
     }
 
     public int getDate() {
@@ -80,7 +99,7 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
     public void serializeBody(OutputStream stream) throws IOException {
         StreamingUtils.writeInt(this.flags, stream);
         StreamingUtils.writeInt(this.pts, stream);
-        if ((flags & FLAG_PTS_TOTAL_LIMIT) != 0) {
+        if (this.hasPtsTotalLimit()) {
             StreamingUtils.writeInt(this.ptsTotalLimit, stream);
         }
         StreamingUtils.writeInt(this.date, stream);
@@ -91,11 +110,23 @@ public class TLRequestUpdatesGetDifference extends TLMethod<TLAbsDifference> {
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
         this.flags = StreamingUtils.readInt(stream);
         this.pts = StreamingUtils.readInt(stream);
-        if ((flags & FLAG_PTS_TOTAL_LIMIT) != 0) {
+        if (this.hasPtsTotalLimit()) {
             this.ptsTotalLimit = StreamingUtils.readInt(stream);
         }
         this.date = StreamingUtils.readInt(stream);
         this.qts = StreamingUtils.readInt(stream);
+    }
+
+    @Override
+    public TLAbsDifference deserializeResponse(InputStream stream, TLContext context) throws IOException {
+        TLObject res = StreamingUtils.readTLObject(stream, context);
+        if (res == null) {
+            throw new IOException("Unable to parse response");
+        } else if (res instanceof TLAbsDifference) {
+            return (TLAbsDifference) res;
+        } else {
+            throw new IOException("Incorrect response type. Expected " + TLAbsDifference.class.getCanonicalName() + ", got: " + res.getClass().getCanonicalName());
+        }
     }
 
     @Override

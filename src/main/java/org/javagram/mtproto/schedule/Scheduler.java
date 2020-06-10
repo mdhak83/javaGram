@@ -558,7 +558,6 @@ public class Scheduler {
                         schedulerPackage.lastAttemptTime = 0;
                     }
                 }
-
             }
         }
     }

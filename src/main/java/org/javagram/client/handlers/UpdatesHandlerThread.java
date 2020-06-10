@@ -14,7 +14,8 @@ public class UpdatesHandlerThread extends Thread {
     private boolean isAlive = true;
 
     protected UpdatesHandlerThread(DefaultKernelHandler mainHandler, AtomicBoolean needGetUpdateState, AtomicBoolean gettingDifferences) {
-        super();
+        super("UpdatesHandlerThread");
+        this.setPriority(9);
         this.mainHandler = mainHandler;
         this.needGetUpdateState = needGetUpdateState;
         this.gettingDifferences = gettingDifferences;
@@ -29,12 +30,14 @@ public class UpdatesHandlerThread extends Thread {
     @Override
     public void run() {
         TLAbsUpdates updates;
-        while(this.isAlive) {
+        while (this.isAlive) {
             try {
                 if (this.needGetUpdateState.get() && !this.gettingDifferences.get()) {
                     this.mainHandler.getUpdatesState();
                 }
-                updates = this.mainHandler.updatesQueue.pollFirst();
+                synchronized(this.mainHandler.updatesQueue) {
+                    updates = this.mainHandler.updatesQueue.pollFirst();
+                }
                 if (updates == null) {
                     synchronized(this.mainHandler.updatesQueue) {
                         try {
@@ -50,5 +53,6 @@ public class UpdatesHandlerThread extends Thread {
                 BotLogger.error(LOGTAG, e);
             }
         }
+        BotLogger.info(LOGTAG, "Quitting UpdatesHandlerThread.");
     }
 }

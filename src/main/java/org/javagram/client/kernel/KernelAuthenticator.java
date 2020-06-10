@@ -42,21 +42,26 @@ public class KernelAuthenticator {
 
     public boolean logOut() {
         boolean result;
-        try {
-            if (this.config.getApiState().isAuthenticated()) {
-                // Logout previous
-                this.config.getKernelCommunicationService().doRpcCallSync(new TLRequestAuthLogOut());
-                // Reset previous stored credentials
-                this.config.getApiState().resetAuth();
+        if (this.config.getApiState().isAuthenticated()) {
+            // Logout previous
+            boolean ok = false;
+            while (!ok) {
+                try {
+                    this.config.getKernelCommunicationService().doRpcCallSync(new TLRequestAuthLogOut());
+                    ok = true;
+                } catch (Exception ex) {
+                    BotLogger.error(LOGTAG, "[logOut] TLRequestAuthLogOut error. Retrying in 1s.");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception ex2) {}
+                    ok = false;
+                }
             }
-            this.config.setRegistered(false);
-            result = true;
-        } catch (ExecutionException | RpcException e) {
-            BotLogger.error(LOGTAG, e);
-            result = false;
+            // Reset previous stored credentials
+            this.config.getApiState().resetAuth();
         }
-
-        return result;
+        this.config.setRegistered(false);
+        return true;
     }
 
     public int getCurrentUserId() {
@@ -69,13 +74,38 @@ public class KernelAuthenticator {
             if (this.config.getApiHash().trim().isEmpty()) {
                 result = false;
             } else {
-                final TLAbsAuthAuthorization authorization;
+                TLAbsAuthAuthorization authorization = null;
                 if (this.config.isRegistered()) {
                     final TLRequestAuthSignIn tlRequestAuthSignIn = getSignInRequest(code);
-                    authorization = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSignIn);
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            authorization = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSignIn);
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[setAuthCode] TLRequestAuthSignIn timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
                 } else {
                     final TLRequestAuthSignUp tlRequestAuthSignUp = getSignUpRequest();
-                    authorization = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSignUp);
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            authorization = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSignUp);
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[login] TLRequestAuthSignUp timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
+                    
                 }
                 if (authorization != null) {
                     this.config.setRegistered(true);
@@ -107,12 +137,38 @@ public class KernelAuthenticator {
             } else {
                 TLSentCode sentCode = null;
                 try {
-                    final TLConfig tlConfig = this.config.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig());
+                    TLConfig tlConfig = null;
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            tlConfig = this.config.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig());
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[login] TLRequestHelpGetConfig timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
                     BotLogger.info(LOGTAG,"Loaded DC list");
                     this.config.getApiState().updateSettings(tlConfig);
                     BotLogger.info(LOGTAG,"Sending code to phone " + this.config.getPhoneNumber() + "...");
                     final TLRequestAuthSendCode tlRequestAuthSendCode = getSendCodeRequest();
-                    sentCode = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+                    ok = false;
+                    while (!ok) {
+                        try {
+                            sentCode = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[login] TLRequestAuthSendCode timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
+                    BotLogger.info(LOGTAG, "TLRequestAuthSendCode OK.");
                     this.createNextCodeTimer(sentCode.getTimeout());
                 } catch (RpcException e) {
                     if (e.getErrorCode() == ERROR_303) {
@@ -123,9 +179,6 @@ public class KernelAuthenticator {
                             sentCode = this.retryLogin(destDC);
                         }
                     }
-                } catch (TimeoutException e) {
-                    BotLogger.error(LOGTAG, e);
-                    sentCode = null;
                 } catch (Exception e) {
                     BotLogger.error(LOGTAG, e);
                 }
@@ -155,10 +208,23 @@ public class KernelAuthenticator {
                 result = LoginStatus.ALREADYLOGGED;
             } else {
                 try {
-                    final TLConfig config = this.config.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig());
+                    TLConfig config = null;
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            config = this.config.getApi().doRpcCallNonAuth(new TLRequestHelpGetConfig());
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[loginBot] TLRequestHelpGetConfig timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
                     BotLogger.info(LOGTAG,"Loaded DC list");
                     this.config.getApiState().updateSettings(config);
-                } catch (IOException | TimeoutException e) {
+                } catch (IOException e) {
                     BotLogger.error(LOGTAG, e);
                 }
                 BotLogger.info(LOGTAG,"Sending code to phone " + config.getPhoneNumber() + "...");
@@ -167,20 +233,43 @@ public class KernelAuthenticator {
                     botAuthorization.setApiId(this.config.getApiId());
                     botAuthorization.setApiHash(this.config.getApiHash());
                     botAuthorization.setBotAuthToken(this.config.getBotToken());
-                    TLAbsAuthAuthorization authorization = this.config.getApi().doRpcCallNonAuth(botAuthorization);
+                    TLAbsAuthAuthorization authorization = null;
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            authorization = this.config.getApi().doRpcCallNonAuth(botAuthorization);
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[loginBot] TLRequestAuthImportBotAuthorization timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
 
                     if (authorization != null) {
                         this.config.setRegistered(true);
                         this.config.getApiState().doAuth(authorization);
                         BotLogger.info(LOGTAG,"Activation complete as #" + this.config.getApiState().getObject().getUid());
-                        this.config.getApi().doRpcCall(new TLRequestUpdatesGetState());
+                        ok = false;
+                        while (!ok) {
+                            try {
+                                this.config.getApi().doRpcCall(new TLRequestUpdatesGetState());
+                                ok = true;
+                            } catch (TimeoutException ex) {
+                                BotLogger.error(LOGTAG, "[loginBot] TLRequestUpdatesGetState timeout. Retrying in 1s.");
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (Exception ex2) {}
+                                ok = false;
+                            }
+                        }
                         BotLogger.info(LOGTAG,"Loaded initial state");
                         result =  LoginStatus.BOTLOGIN;
                     }
                 } catch (RpcException e) {
                     BotLogger.severe(LOGTAG, e);
-                } catch (TimeoutException e) {
-                    BotLogger.error(LOGTAG, e);
                 }
             }
         } catch (IOException ex) {
@@ -201,7 +290,20 @@ public class KernelAuthenticator {
             public void run() {
                 try {
                     final TLRequestAuthSendCode tlRequestAuthSendCode = KernelAuthenticator.this.getSendCodeRequest();
-                    TLSentCode sentCode = KernelAuthenticator.this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+                    TLSentCode sentCode = null;
+                    boolean ok = false;
+                    while (!ok) {
+                        try {
+                            sentCode = KernelAuthenticator.this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+                            ok = true;
+                        } catch (TimeoutException ex) {
+                            BotLogger.error(LOGTAG, "[createNextCodeTimer] TLRequestAuthSendCode timeout. Retrying in 1s.");
+                            try {
+                                Thread.sleep(1000);
+                            } catch (Exception ex2) {}
+                            ok = false;
+                        }
+                    }
                     this.cancel();
                     KernelAuthenticator.this.createNextCodeTimer(sentCode.getTimeout());
                 } catch (Exception e) {
@@ -236,10 +338,22 @@ public class KernelAuthenticator {
     }
 
     private TLSentCode retryLogin(int destDC) throws IOException, TimeoutException {
-        final TLSentCode sentCode;
         this.config.getApi().switchToDc(destDC);
         final TLRequestAuthSendCode tlRequestAuthSendCode = this.getSendCodeRequest();
-        sentCode = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+        TLSentCode sentCode = null;
+        boolean ok = false;
+        while (!ok) {
+            try {
+                sentCode = this.config.getApi().doRpcCallNonAuth(tlRequestAuthSendCode);
+                ok = true;
+            } catch (TimeoutException ex) {
+                BotLogger.error(LOGTAG, "[retryLogin] TLRequestAuthSendCode timeout. Retrying in 1s.");
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception ex2) {}
+                ok = false;
+            }
+        }
         this.resetTimer();
         this.createNextCodeTimer(sentCode.getTimeout());
         return sentCode;

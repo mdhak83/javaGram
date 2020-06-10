@@ -10,6 +10,7 @@ import org.javagram.api._primitives.TLVector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A message
@@ -491,7 +492,7 @@ public class TLMessage extends TLAbsMessage {
         String from = String.format("%08x", this.fromId);
         String to = this.toId != null ? this.toId.toLog() : null;
         String content = this.message;
-        ret = "Message#" + String.format("%08x", this.id) + " from User#" + (from != null ? from : "---") + " to #" + (to != null ? to : "---") + " with content '" + (content != null ? content : "---") + "' (Views=" + this.views + ") " + (this.hasMedia() ? " with " + this.media.getClass().getSimpleName() : "") + ".";
+        ret = "Message#" + String.format("%08x", this.id) + " from User#" + (from != null ? from : "---") + " to #" + (to != null ? to : "---") + " with content '" + (content != null ? StringUtils.abbreviate(content, 15) : "---") + "' (Views=" + this.views + ") " + (this.hasMedia() ? " with " + this.media.getClass().getSimpleName() : "") + ".";
         return ret;
     }
 

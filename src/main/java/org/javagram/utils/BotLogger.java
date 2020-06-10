@@ -5,7 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.builder.api.AppenderComponentBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
 import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
@@ -22,10 +22,10 @@ public final class BotLogger {
 
     private ConfigurationBuilder<BuiltConfiguration> configurationBuilder = null;
     private Logger _logger = null;
-    private final static Level LEVEL = Level.OFF;
+    private final static Level LEVEL = Level.ALL;
 
     static {
-        System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
+        //System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
         System.setProperty("log4j2.skipJansi", "false");
         INSTANCE = new BotLogger();
     }
@@ -49,14 +49,15 @@ public final class BotLogger {
         this.configurationBuilder.add(appenderBuilder);
 
         this.configurationBuilder.add(
-                this.configurationBuilder.newAsyncLogger("BotLogger", LEVEL)
+                this.configurationBuilder.newLogger("BotLogger", LEVEL)
                         .add(this.configurationBuilder.newAppenderRef("StdoutAppender"))
                 .addAttribute("additivity", false)
         );
 
-        LoggerContext ctx = Configurator.initialize(this.configurationBuilder.build());
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        final Configuration config = ctx.getConfiguration();
+        config.addLogger("BotLogger", this.configurationBuilder.build().getLogger("BotLogger"));
         ctx.updateLoggers();
-        ctx.start();
         this._logger = LogManager.getLogger("BotLogger");
     }
 

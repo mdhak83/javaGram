@@ -4,7 +4,6 @@ import org.javagram.client.handlers.interfaces.IUpdatesHandler;
 import org.jetbrains.annotations.NotNull;
 import org.javagram.utils.BotLogger;
 import org.javagram.utils.NotificationsService;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,9 +41,7 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
         NotificationsService.getInstance().addObserver(this, NotificationsService.needGetUpdates);
         this.running = false;
         this.updatesHandlerThread = new UpdatesHandlerThread(this, this.needGetUpdateState, this.gettingDifferences);
-        this.updatesHandlerThread.setPriority(9);
         this.updateHandlerThread = new UpdateHandlerThread(this.config.getUpdatesHandler());
-        this.updateHandlerThread.setPriority(9);
     }
 
     public void start() {
@@ -158,14 +155,16 @@ public class DefaultKernelHandler implements NotificationsService.NotificationOb
         try {
             final TLUpdatesState state = this.config.getKernelCommunicationService().doRpcCallSync(new TLRequestUpdatesGetState());
             if (state != null) {
-                BotLogger.error(LOGTAG, "Received updates state");
-                this.config.getUpdatesHandler().updateStateModification(state);
+                BotLogger.debug(LOGTAG, "Received updates state");
+                this.config.getUpdatesHandler().updateCommonUpdateState(state);
                 this.needGetUpdateState.set(false);
             } else {
                 BotLogger.error(LOGTAG, "Error getting updates state");
             }
         } catch (ExecutionException | RpcException e) {
             BotLogger.error(LOGTAG, e);
+        } catch (Exception ex) {
+            int k = 0;
         }
     }
 

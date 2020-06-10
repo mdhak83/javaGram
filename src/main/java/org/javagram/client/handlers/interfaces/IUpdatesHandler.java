@@ -15,7 +15,7 @@ public interface IUpdatesHandler {
     void getDifferences();
     void onTLAbsDifference(@NotNull TLAbsDifference absDifference);
     void onTLChannelDifferences(List<TLAbsUser> users, List<TLAbsMessage> messages, List<TLAbsUpdate> newUpdates, List<TLAbsChat> chats);
-    void updateStateModification(TLUpdatesState state);
+    void updateCommonUpdateState(TLUpdatesState state);
     boolean checkSeq(int seq, int seqStart, int date);
     void processUpdate(UpdateWrapper updateWrapper);
     void onTLUpdatesTooLong();

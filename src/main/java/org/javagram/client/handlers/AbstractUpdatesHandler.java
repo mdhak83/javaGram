@@ -118,204 +118,208 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
 
     @Override
     public final void processUpdate(UpdateWrapper updateWrapper) {
-        boolean canHandle = true;
-        if (updateWrapper.isCheckPts()) {
-            canHandle = checkPts(updateWrapper);
-        }
+        try {
+            boolean canHandle = true;
+            if (updateWrapper.isCheckPts()) {
+                canHandle = checkPts(updateWrapper);
+            }
 
-        if (canHandle) {
-            final TLObject update = updateWrapper.getUpdate();
-            BotLogger.debug(LOGTAG, "Received update: " + update.toString());
-            /** *****************************
-             *  *****************************
-             *       Update
-             *  *****************************
-             ** *****************************/
-            if (update instanceof TLFakeUpdate) {
-                this.onTLFakeUpdate((TLFakeUpdate) update);
-            } else if (update instanceof TLUpdateBotCallbackQuery) {
-                this.onTLUpdateBotCallbackQuery((TLUpdateBotCallbackQuery) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateBotInlineQuery) {
-                this.onTLUpdateBotInlineQuery((TLUpdateBotInlineQuery) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateBotInlineSend) {
-                this.onTLUpdateBotInlineSend((TLUpdateBotInlineSend) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateBotPrecheckoutQuery) {
-                this.onTLUpdateBotPrecheckoutQuery((TLUpdateBotPrecheckoutQuery) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateBotShippingQuery) {
-                this.onTLUpdateBotShippingQuery((TLUpdateBotShippingQuery) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateBotWebhookJSON) {
-                this.onTLUpdateBotWebhookJSON((TLUpdateBotWebhookJSON) update);
-            } else if (update instanceof TLUpdateBotWebhookJSONQuery) {
-                this.onTLUpdateBotWebhookJSONQuery((TLUpdateBotWebhookJSONQuery) update);
-            } else if (update instanceof TLUpdateChannelTooLong) {
-                this.onTLUpdateChannelTooLong((TLUpdateChannelTooLong) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannel) {
-                this.onTLUpdateChannel((TLUpdateChannel) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelAvailableMessages) {
-                this.onTLUpdateChannelAvailableMessages((TLUpdateChannelAvailableMessages) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelMessageViews) {
-                this.onTLUpdateChannelMessageViews((TLUpdateChannelMessageViews) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelNewMessage) {
-                this.onTLUpdateChannelNewMessage((TLUpdateChannelNewMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelPinnedMessage) {
-                this.onTLUpdateChannelPinnedMessage((TLUpdateChannelPinnedMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelReadMessagesContents) {
-                this.onTLUpdateChannelReadMessagesContents((TLUpdateChannelReadMessagesContents) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChannelWebPage) {
-                this.onTLUpdateChannelWebPage((TLUpdateChannelWebPage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatDefaultBannedRights) {
-                this.onTLUpdateChatDefaultBannedRights((TLUpdateChatDefaultBannedRights) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatParticipantAdd) {
-                this.onTLUpdateChatParticipantAdd((TLUpdateChatParticipantAdd) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatParticipantAdmin) {
-                this.onTLUpdateChatParticipantAdmin((TLUpdateChatParticipantAdmin) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatParticipantDelete) {
-                this.onTLUpdateChatParticipantDelete((TLUpdateChatParticipantDelete) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatParticipants) {
-                this.onTLUpdateChatParticipants((TLUpdateChatParticipants) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatPinnedMessage) {
-                this.onTLUpdateChatPinnedMessage((TLUpdateChatPinnedMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateChatUserTyping) {
-                this.onTLUpdateChatUserTyping((TLUpdateChatUserTyping) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateConfig) {
-                this.onTLUpdateConfig((TLUpdateConfig) update);
-            } else if (update instanceof TLUpdateContactsReset) {
-                this.onTLUpdateContactsReset((TLUpdateContactsReset) update);
-            } else if (update instanceof TLUpdateDcOptions) {
-                this.onTLUpdateDcOptions((TLUpdateDcOptions) update);
-            } else if (update instanceof TLUpdateDeleteChannelMessages) {
-                this.onTLUpdateDeleteChannelMessages((TLUpdateDeleteChannelMessages) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateDeleteMessages) {
-                this.onTLUpdateDeleteMessages((TLUpdateDeleteMessages) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateDeleteScheduledMessage) {
-                this.onTLUpdateDeleteScheduledMessage((TLUpdateDeleteScheduledMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateDialogPinned) {
-                this.onTLUpdateDialogPinned((TLUpdateDialogPinned) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateDialogUnreadMark) {
-                this.onTLUpdateDialogUnreadMark((TLUpdateDialogUnreadMark) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateDraftMessage) {
-                this.onTLUpdateDraftMessage((TLUpdateDraftMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateEditChannelMessage) {
-                this.onTLUpdateEditChannelMessage((TLUpdateEditChannelMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateEditMessage) {
-                this.onTLUpdateEditMessage((TLUpdateEditMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateFavedSticker) {
-                this.onTLUpdateFavedSticker((TLUpdateFavedSticker) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateFolderPeers) {
-                this.onTLUpdateFolderPeers((TLUpdateFolderPeers) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateGeoLiveViewed) {
-                this.onTLUpdateGeoLiveViewed((TLUpdateGeoLiveViewed) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateInlineBotCallbackQuery) {
-                this.onTLUpdateInlineBotCallbackQuery((TLUpdateInlineBotCallbackQuery) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateLangPack) {
-                this.onTLUpdateLangPack((TLUpdateLangPack) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateLangPackTooLong) {
-                this.onTLUpdateLangPackTooLong((TLUpdateLangPackTooLong) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateLoginToken) {
-                this.onTLUpdateLoginToken((TLUpdateLoginToken) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateMessageId) {
-                this.onTLUpdateMessageId((TLUpdateMessageId) update);
-            } else if (update instanceof TLUpdateMessagePoll) {
-                this.onTLUpdateMessagePoll((TLUpdateMessagePoll) update);
-            } else if (update instanceof TLUpdateNewMessage) {
-                this.onTLUpdateNewMessage((TLUpdateNewMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateNewScheduledMessage) {
-                this.onTLUpdateNewScheduledMessage((TLUpdateNewScheduledMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateNewStickerSet) {
-                this.onTLUpdateNewStickerSet((TLUpdateNewStickerSet) update);
-            } else if (update instanceof TLUpdateNotifySettings) {
-                this.onTLUpdateNotifySettings((TLUpdateNotifySettings) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdatePeerLocated) {
-                this.onTLUpdatePeerLocated((TLUpdatePeerLocated) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdatePeerSettings) {
-                this.onTLUpdatePeerSettings((TLUpdatePeerSettings) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdatePhoneCall) {
-                this.onTLUpdatePhoneCall((TLUpdatePhoneCall) update);
-            } else if (update instanceof TLUpdatePinnedDialogs) {
-                this.onTLUpdatePinnedDialogs((TLUpdatePinnedDialogs) update);
-            } else if (update instanceof TLUpdatePrivacy) {
-                this.onTLUpdatePrivacy((TLUpdatePrivacy) update);
-            } else if (update instanceof TLUpdatePtsChanged) {
-                this.onTLUpdatePtsChanged((TLUpdatePtsChanged) update);
-            } else if (update instanceof TLUpdateReadChannelInbox) {
-                this.onTLUpdateReadChannelInbox((TLUpdateReadChannelInbox) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateReadChannelOutbox) {
-                this.onTLUpdateReadChannelOutbox((TLUpdateReadChannelOutbox) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateReadFeaturedStickers) {
-                this.onTLUpdateReadFeaturedStickers((TLUpdateReadFeaturedStickers) update);
-            } else if (update instanceof TLUpdateReadHistoryInbox) {
-                this.onTLUpdateReadHistoryInbox((TLUpdateReadHistoryInbox) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateReadMessagesContents) {
-                this.onTLUpdateReadMessagesContents((TLUpdateReadMessagesContents) update);
-            } else if (update instanceof TLUpdateReadMessagesInbox) {
-                this.onTLUpdateReadMessagesInbox((TLUpdateReadMessagesInbox) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateReadMessagesOutbox) {
-                this.onTLUpdateReadMessagesOutbox((TLUpdateReadMessagesOutbox) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateRecentStickers) {
-                this.onTLUpdateRecentStickers((TLUpdateRecentStickers) update);
-            } else if (update instanceof TLUpdateSavedGifs) {
-                this.onTLUpdateSavedGifs((TLUpdateSavedGifs) update);
-            } else if (update instanceof TLUpdateServiceNotification) {
-                this.onTLUpdateServiceNotification((TLUpdateServiceNotification) update);
-            } else if (update instanceof TLUpdateStickerSets) {
-                this.onTLUpdateStickerSets((TLUpdateStickerSets) update);
-            } else if (update instanceof TLUpdateStickerSetsOrder) {
-                this.onTLUpdateStickerSetsOrder((TLUpdateStickerSetsOrder) update);
-            } else if (update instanceof TLUpdateTheme) {
-                this.onTLUpdateTheme((TLUpdateTheme) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserBlocked) {
-                this.onTLUpdateUserBlocked((TLUpdateUserBlocked) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserName) {
-                this.onTLUpdateUserName((TLUpdateUserName) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserPhone) {
-                this.onTLUpdateUserPhone((TLUpdateUserPhone) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserPhoto) {
-                this.onTLUpdateUserPhoto((TLUpdateUserPhoto) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserPinnedMessage) {
-                this.onTLUpdateUserPinnedMessage((TLUpdateUserPinnedMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserStatus) {
-                this.onTLUpdateUserStatus((TLUpdateUserStatus) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateUserTyping) {
-                this.onTLUpdateUserTyping((TLUpdateUserTyping) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateWebPage) {
-                this.onTLUpdateWebPage((TLUpdateWebPage) update);
-            /** ***************************** 
-             *  *****************************
-             *       Update.encrypted
-             *  *****************************
-             ** *****************************/
-            } else if (update instanceof TLUpdateEncryptedChatTyping) {
-                this.onTLUpdateEncryptedChatTyping((TLUpdateEncryptedChatTyping) update);
-            } else if (update instanceof TLUpdateEncryptedMessagesRead) {
-                this.onTLUpdateEncryptedMessagesRead((TLUpdateEncryptedMessagesRead) update);
-            } else if (update instanceof TLUpdateEncryption) {
-                this.onTLUpdateEncryption((TLUpdateEncryption) update);
-            } else if (update instanceof TLUpdateNewEncryptedMessage) {
-                this.onTLUpdateNewEncryptedMessage((TLUpdateNewEncryptedMessage) update);
-            /** *****************************
-             *  *****************************
-             *       Updates
-             *  *****************************
-             ** *****************************/
-            } else if (update instanceof TLUpdateShort) {
-                this.onTLUpdateShort((TLUpdateShort) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateShortChatMessage) {
-                this.onTLUpdateShortChatMessage((TLUpdateShortChatMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateShortMessage) {
-                this.onTLUpdateShortMessage((TLUpdateShortMessage) update, updateWrapper.isGettingDifferences());
-            } else if (update instanceof TLUpdateShortSentMessage) {
-                this.onTLUpdateShortSentMessage((TLUpdateShortSentMessage) update);
-            /** *****************************
-             *  *****************************
-             *       Others
-             *  *****************************
-             ** *****************************/
-            } else {
-                BotLogger.debug(LOGTAG, "Unsupported TLAbsUpdate: " + update.toString());
+            if (canHandle) {
+                final TLObject update = updateWrapper.getUpdate();
+                BotLogger.debug(LOGTAG, "Received update: " + update.toString());
+                /** *****************************
+                 *  *****************************
+                 *       Update
+                 *  *****************************
+                 ** *****************************/
+                if (update instanceof TLFakeUpdate) {
+                    this.onTLFakeUpdate((TLFakeUpdate) update);
+                } else if (update instanceof TLUpdateBotCallbackQuery) {
+                    this.onTLUpdateBotCallbackQuery((TLUpdateBotCallbackQuery) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateBotInlineQuery) {
+                    this.onTLUpdateBotInlineQuery((TLUpdateBotInlineQuery) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateBotInlineSend) {
+                    this.onTLUpdateBotInlineSend((TLUpdateBotInlineSend) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateBotPrecheckoutQuery) {
+                    this.onTLUpdateBotPrecheckoutQuery((TLUpdateBotPrecheckoutQuery) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateBotShippingQuery) {
+                    this.onTLUpdateBotShippingQuery((TLUpdateBotShippingQuery) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateBotWebhookJSON) {
+                    this.onTLUpdateBotWebhookJSON((TLUpdateBotWebhookJSON) update);
+                } else if (update instanceof TLUpdateBotWebhookJSONQuery) {
+                    this.onTLUpdateBotWebhookJSONQuery((TLUpdateBotWebhookJSONQuery) update);
+                } else if (update instanceof TLUpdateChannelTooLong) {
+                    this.onTLUpdateChannelTooLong((TLUpdateChannelTooLong) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannel) {
+                    this.onTLUpdateChannel((TLUpdateChannel) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelAvailableMessages) {
+                    this.onTLUpdateChannelAvailableMessages((TLUpdateChannelAvailableMessages) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelMessageViews) {
+                    this.onTLUpdateChannelMessageViews((TLUpdateChannelMessageViews) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelNewMessage) {
+                    this.onTLUpdateChannelNewMessage((TLUpdateChannelNewMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelPinnedMessage) {
+                    this.onTLUpdateChannelPinnedMessage((TLUpdateChannelPinnedMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelReadMessagesContents) {
+                    this.onTLUpdateChannelReadMessagesContents((TLUpdateChannelReadMessagesContents) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChannelWebPage) {
+                    this.onTLUpdateChannelWebPage((TLUpdateChannelWebPage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatDefaultBannedRights) {
+                    this.onTLUpdateChatDefaultBannedRights((TLUpdateChatDefaultBannedRights) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatParticipantAdd) {
+                    this.onTLUpdateChatParticipantAdd((TLUpdateChatParticipantAdd) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatParticipantAdmin) {
+                    this.onTLUpdateChatParticipantAdmin((TLUpdateChatParticipantAdmin) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatParticipantDelete) {
+                    this.onTLUpdateChatParticipantDelete((TLUpdateChatParticipantDelete) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatParticipants) {
+                    this.onTLUpdateChatParticipants((TLUpdateChatParticipants) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatPinnedMessage) {
+                    this.onTLUpdateChatPinnedMessage((TLUpdateChatPinnedMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateChatUserTyping) {
+                    this.onTLUpdateChatUserTyping((TLUpdateChatUserTyping) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateConfig) {
+                    this.onTLUpdateConfig((TLUpdateConfig) update);
+                } else if (update instanceof TLUpdateContactsReset) {
+                    this.onTLUpdateContactsReset((TLUpdateContactsReset) update);
+                } else if (update instanceof TLUpdateDcOptions) {
+                    this.onTLUpdateDcOptions((TLUpdateDcOptions) update);
+                } else if (update instanceof TLUpdateDeleteChannelMessages) {
+                    this.onTLUpdateDeleteChannelMessages((TLUpdateDeleteChannelMessages) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateDeleteMessages) {
+                    this.onTLUpdateDeleteMessages((TLUpdateDeleteMessages) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateDeleteScheduledMessage) {
+                    this.onTLUpdateDeleteScheduledMessage((TLUpdateDeleteScheduledMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateDialogPinned) {
+                    this.onTLUpdateDialogPinned((TLUpdateDialogPinned) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateDialogUnreadMark) {
+                    this.onTLUpdateDialogUnreadMark((TLUpdateDialogUnreadMark) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateDraftMessage) {
+                    this.onTLUpdateDraftMessage((TLUpdateDraftMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateEditChannelMessage) {
+                    this.onTLUpdateEditChannelMessage((TLUpdateEditChannelMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateEditMessage) {
+                    this.onTLUpdateEditMessage((TLUpdateEditMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateFavedSticker) {
+                    this.onTLUpdateFavedSticker((TLUpdateFavedSticker) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateFolderPeers) {
+                    this.onTLUpdateFolderPeers((TLUpdateFolderPeers) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateGeoLiveViewed) {
+                    this.onTLUpdateGeoLiveViewed((TLUpdateGeoLiveViewed) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateInlineBotCallbackQuery) {
+                    this.onTLUpdateInlineBotCallbackQuery((TLUpdateInlineBotCallbackQuery) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateLangPack) {
+                    this.onTLUpdateLangPack((TLUpdateLangPack) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateLangPackTooLong) {
+                    this.onTLUpdateLangPackTooLong((TLUpdateLangPackTooLong) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateLoginToken) {
+                    this.onTLUpdateLoginToken((TLUpdateLoginToken) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateMessageId) {
+                    this.onTLUpdateMessageId((TLUpdateMessageId) update);
+                } else if (update instanceof TLUpdateMessagePoll) {
+                    this.onTLUpdateMessagePoll((TLUpdateMessagePoll) update);
+                } else if (update instanceof TLUpdateNewMessage) {
+                    this.onTLUpdateNewMessage((TLUpdateNewMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateNewScheduledMessage) {
+                    this.onTLUpdateNewScheduledMessage((TLUpdateNewScheduledMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateNewStickerSet) {
+                    this.onTLUpdateNewStickerSet((TLUpdateNewStickerSet) update);
+                } else if (update instanceof TLUpdateNotifySettings) {
+                    this.onTLUpdateNotifySettings((TLUpdateNotifySettings) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdatePeerLocated) {
+                    this.onTLUpdatePeerLocated((TLUpdatePeerLocated) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdatePeerSettings) {
+                    this.onTLUpdatePeerSettings((TLUpdatePeerSettings) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdatePhoneCall) {
+                    this.onTLUpdatePhoneCall((TLUpdatePhoneCall) update);
+                } else if (update instanceof TLUpdatePinnedDialogs) {
+                    this.onTLUpdatePinnedDialogs((TLUpdatePinnedDialogs) update);
+                } else if (update instanceof TLUpdatePrivacy) {
+                    this.onTLUpdatePrivacy((TLUpdatePrivacy) update);
+                } else if (update instanceof TLUpdatePtsChanged) {
+                    this.onTLUpdatePtsChanged((TLUpdatePtsChanged) update);
+                } else if (update instanceof TLUpdateReadChannelInbox) {
+                    this.onTLUpdateReadChannelInbox((TLUpdateReadChannelInbox) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateReadChannelOutbox) {
+                    this.onTLUpdateReadChannelOutbox((TLUpdateReadChannelOutbox) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateReadFeaturedStickers) {
+                    this.onTLUpdateReadFeaturedStickers((TLUpdateReadFeaturedStickers) update);
+                } else if (update instanceof TLUpdateReadHistoryInbox) {
+                    this.onTLUpdateReadHistoryInbox((TLUpdateReadHistoryInbox) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateReadMessagesContents) {
+                    this.onTLUpdateReadMessagesContents((TLUpdateReadMessagesContents) update);
+                } else if (update instanceof TLUpdateReadMessagesInbox) {
+                    this.onTLUpdateReadMessagesInbox((TLUpdateReadMessagesInbox) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateReadMessagesOutbox) {
+                    this.onTLUpdateReadMessagesOutbox((TLUpdateReadMessagesOutbox) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateRecentStickers) {
+                    this.onTLUpdateRecentStickers((TLUpdateRecentStickers) update);
+                } else if (update instanceof TLUpdateSavedGifs) {
+                    this.onTLUpdateSavedGifs((TLUpdateSavedGifs) update);
+                } else if (update instanceof TLUpdateServiceNotification) {
+                    this.onTLUpdateServiceNotification((TLUpdateServiceNotification) update);
+                } else if (update instanceof TLUpdateStickerSets) {
+                    this.onTLUpdateStickerSets((TLUpdateStickerSets) update);
+                } else if (update instanceof TLUpdateStickerSetsOrder) {
+                    this.onTLUpdateStickerSetsOrder((TLUpdateStickerSetsOrder) update);
+                } else if (update instanceof TLUpdateTheme) {
+                    this.onTLUpdateTheme((TLUpdateTheme) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserBlocked) {
+                    this.onTLUpdateUserBlocked((TLUpdateUserBlocked) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserName) {
+                    this.onTLUpdateUserName((TLUpdateUserName) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserPhone) {
+                    this.onTLUpdateUserPhone((TLUpdateUserPhone) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserPhoto) {
+                    this.onTLUpdateUserPhoto((TLUpdateUserPhoto) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserPinnedMessage) {
+                    this.onTLUpdateUserPinnedMessage((TLUpdateUserPinnedMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserStatus) {
+                    this.onTLUpdateUserStatus((TLUpdateUserStatus) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateUserTyping) {
+                    this.onTLUpdateUserTyping((TLUpdateUserTyping) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateWebPage) {
+                    this.onTLUpdateWebPage((TLUpdateWebPage) update);
+                /** ***************************** 
+                 *  *****************************
+                 *       Update.encrypted
+                 *  *****************************
+                 ** *****************************/
+                } else if (update instanceof TLUpdateEncryptedChatTyping) {
+                    this.onTLUpdateEncryptedChatTyping((TLUpdateEncryptedChatTyping) update);
+                } else if (update instanceof TLUpdateEncryptedMessagesRead) {
+                    this.onTLUpdateEncryptedMessagesRead((TLUpdateEncryptedMessagesRead) update);
+                } else if (update instanceof TLUpdateEncryption) {
+                    this.onTLUpdateEncryption((TLUpdateEncryption) update);
+                } else if (update instanceof TLUpdateNewEncryptedMessage) {
+                    this.onTLUpdateNewEncryptedMessage((TLUpdateNewEncryptedMessage) update);
+                /** *****************************
+                 *  *****************************
+                 *       Updates
+                 *  *****************************
+                 ** *****************************/
+                } else if (update instanceof TLUpdateShort) {
+                    this.onTLUpdateShort((TLUpdateShort) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateShortChatMessage) {
+                    this.onTLUpdateShortChatMessage((TLUpdateShortChatMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateShortMessage) {
+                    this.onTLUpdateShortMessage((TLUpdateShortMessage) update, updateWrapper.isGettingDifferences());
+                } else if (update instanceof TLUpdateShortSentMessage) {
+                    this.onTLUpdateShortSentMessage((TLUpdateShortSentMessage) update);
+                /** *****************************
+                 *  *****************************
+                 *       Others
+                 *  *****************************
+                 ** *****************************/
+                } else {
+                    BotLogger.debug(LOGTAG, "Unsupported TLAbsUpdate: " + update.toString());
+                }
+                if (updateWrapper.isUpdatePts()){
+                    this.updateChannelUpdateState(updateWrapper);
+                }
             }
-            if (updateWrapper.isUpdatePts()){
-                this.updatePts(updateWrapper);
-            }
+        } catch (Exception ex) {
+            BotLogger.debug(LOGTAG, "Unsupported TLUpdateWrapper: " + ex.getMessage(), ex);
         }
     }
 
@@ -334,9 +338,12 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 if (!updateWrapper.isChannel() || this.config.getDatabaseManager().isChatMissing(updateWrapper.getChannelId())) {
                     this.getDifferences();
                 } else {
-                    final TLAbsChat chat = this.config.getDatabaseManager().getChatById(updateWrapper.getChannelId(), null);
-                    if (chat != null) {
-                        this.config.getDifferencesHandler().getChannelDifferences(chat.getId(), chat.getAccessHash());
+                    try {
+                        final TLAbsChat chat = this.config.getDatabaseManager().getChatById(updateWrapper.getChannelId(), null);
+                        if (chat != null && !chat.isMin()) {
+                            this.config.getDifferencesHandler().getChannelDifferences(chat.getId(), chat.getAccessHash());
+                        }
+                    } catch (Exception ex) {
                     }
                 }
             }
@@ -360,13 +367,13 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
         this.config.getDifferencesHandler().getDifferences();
     }
 
-    private void updatePts(UpdateWrapper updateWrapper) {
+    private void updateChannelUpdateState(UpdateWrapper updateWrapper) {
         this.config.getDifferenceParametersService().setNewUpdateParams(updateWrapper.getChannelId(), updateWrapper.getPts(), updateWrapper.getSeq(), updateWrapper.getDate());
     }
 
     @Override
-    public final void updateStateModification(TLUpdatesState state) {
-        this.config.getDifferencesHandler().updateStateModification(state, false);
+    public final void updateCommonUpdateState(TLUpdatesState state) {
+        this.config.getDifferencesHandler().updateCommonUpdateState(state, false);
     }
 
     /** *****************************
@@ -549,9 +556,12 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                     this.config.getDifferencesHandler().getDifferences();
                 }
             } else {
-                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
-                if (channel != null) {
-                    this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+                try {
+                    final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
+                    if (channel != null) {
+                        this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+                    }
+                } catch (Exception ex) {
                 }
             }
         } else {
@@ -585,9 +595,12 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                 this.config.getDifferencesHandler().getDifferences();
             }
         } else {
-            final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
-            if (channel != null) {
-                this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+            try {
+                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
+                if (channel != null) {
+                    this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+                }
+            } catch (Exception ex) {
             }
         }
     }
@@ -755,9 +768,12 @@ public abstract class AbstractUpdatesHandler implements IUpdatesHandler {
                     this.config.getDifferencesHandler().getDifferences();
                 }
             } else {
-                final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
-                if (channel != null) {
-                    this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+                try {
+                    final TLAbsChat channel = this.config.getDatabaseManager().getChatById(update.getChannelId(), true);
+                    if (channel != null) {
+                        this.config.getDifferencesHandler().getChannelDifferences(channel.getId(), channel.getAccessHash());
+                    }
+                } catch (Exception ex) {
                 }
             }
         } else {

@@ -1,6 +1,5 @@
 package org.javagram.pyronet;
 
-import org.javagram.mtproto.transport.ByteBufferDesc;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -13,11 +12,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.javagram.mtproto.transport.ByteBufferDesc;
 
 public class PyroClient {
 
-    private final static AtomicInteger DROP_THREAD_INDEX = new AtomicInteger(0);
     private final PyroSelector selector;
     private final SelectionKey key;
     private final ByteStream outbound;
@@ -34,23 +32,17 @@ public class PyroClient {
         ((SocketChannel) this.key.channel()).connect(host);
     }
 
-    private PyroClient(PyroSelector selector, SelectionKey key) {
+    // called by PyroClient and PyroServer
+    PyroClient(PyroSelector selector, SelectionKey key) {
         this.selector = selector;
         this.selector.checkThread();
-
         this.key = key;
-        this.initialize();
-
+        this.key.attach(this);
         this.outbound = new ByteStream();
         this.listeners = new CopyOnWriteArrayList<>();
         this.lastEventTime = System.currentTimeMillis();
     }
 
-    private void initialize() {
-        this.key.attach(this);
-    }
-
-    //
     public void addListener(PyroClientListener listener) {
         this.selector.checkThread();
         this.listeners.add(listener);
@@ -66,13 +58,16 @@ public class PyroClient {
         this.listeners.clear();
     }
 
+    /**
+     * Returns the PyroSelector that created this client
+     * @return 
+     */
     public PyroSelector selector() {
         return this.selector;
     }
 
     /**
      * Attach any object to a client, for example to store session information
-     *
      * @param attachment
      */
     public void attach(Object attachment) {
@@ -80,11 +75,9 @@ public class PyroClient {
     }
 
     /**
-     * Returns the previously attached object, or <code>null</code> if none is
-     * set
-     *
+     * Returns the previously attached object, or <code>null</code> if none is set
      * @param <T>
-     * @return
+     * @return 
      */
     public <T> T attachment() {
         return (T) this.attachment;
@@ -92,8 +85,7 @@ public class PyroClient {
 
     /**
      * Returns the local socket address (host+port)
-     *
-     * @return
+     * @return 
      */
     public InetSocketAddress getLocalAddress() {
         Socket s = ((SocketChannel) this.key.channel()).socket();
@@ -102,11 +94,10 @@ public class PyroClient {
 
     /**
      * Returns the remove socket address (host+port)
-     *
-     * @return
+     * @return 
      */
     public InetSocketAddress getRemoteAddress() {
-        Socket s = ((SocketChannel) this.key.channel()).socket();
+        Socket s = ((SocketChannel) key.channel()).socket();
         return (InetSocketAddress) s.getRemoteSocketAddress();
     }
 
@@ -131,7 +122,6 @@ public class PyroClient {
     /**
      * If enabled, causes calls to write() to make an attempt to write the
      * bytes, without waiting for the selector to signal writable state.
-     *
      * @param enabled
      */
     public void setEagerWrite(boolean enabled) {
@@ -140,53 +130,49 @@ public class PyroClient {
 
     /**
      * Will enqueue the bytes to send them<br>
-     * 1.when the selector is ready to write, if eagerWrite is disabled
-     * (default)<br>
+     * 1. when the selector is ready to write, if eagerWrite is disabled (default)<br>
      * 2. immediately, if eagerWrite is enabled<br>
-     * The ByteBuffer instance is kept, not copied, and thus should not be
-     * modified
+     * The ByteBuffer instance is kept, not copied, and thus should not be modified
      *
      * @param data
      * @throws PyroException when shutdown() has been called.
      */
     public void write(ByteBufferDesc data) throws PyroException {
         this.selector.checkThread();
-        if (this.key.isValid()) {
-            if (this.doShutdown) {
-                throw new PyroException("shutting down");
-            }
-            this.outbound.append(data);
-            if (this.doEagerWrite) {
-                try {
-                    this.onReadyToWrite(System.currentTimeMillis());
-                } catch (NotYetConnectedException exc) {
-                    this.adjustWriteOp();
-                } catch (IOException exc) {
-                    this.onConnectionError(exc);
-                    this.key.cancel();
-                }
-            } else {
+        if (!this.key.isValid()) {
+            // graceful, as this is meant to be async
+            return;
+        }
+        if (this.doShutdown) {
+            throw new PyroException("shutting down");
+        }
+        this.outbound.append(data);
+        if (this.doEagerWrite) {
+            try {
+                this.onReadyToWrite(System.currentTimeMillis());
+            } catch (NotYetConnectedException exc) {
                 this.adjustWriteOp();
+            } catch (IOException exc) {
+                this.onConnectionError(exc);
+                this.key.cancel();
             }
+        } else {
+            this.adjustWriteOp();
         }
     }
 
     /**
      * Writes as many as possible bytes to the socket buffer
-     *
-     * @return the number of bytes written.
+     * @return 
      */
     public int flush() {
         int total = 0;
-        while (this.outbound.hasData()) {
-            int written;
+        int written = -1;
+        while (this.outbound.hasData() && written != 0) {
             try {
                 written = this.onReadyToWrite(System.currentTimeMillis());
-            } catch (IOException ex) {
+            } catch (IOException exc) {
                 written = 0;
-            }
-            if (written == 0) {
-                break;
             }
             total += written;
         }
@@ -196,16 +182,16 @@ public class PyroClient {
     /**
      * Makes an attempt to write all outbound bytes, fails on failure.
      *
-     * @return the number of bytes written
+     * @return 
      * @throws PyroException on failure
      */
     public int flushOrDie() throws PyroException {
         int total = 0;
+        int written;
         while (this.outbound.hasData()) {
-            int written;
             try {
                 written = this.onReadyToWrite(System.currentTimeMillis());
-            } catch (IOException ex) {
+            } catch (IOException exc) {
                 written = 0;
             }
             if (written == 0) {
@@ -217,7 +203,8 @@ public class PyroClient {
     }
 
     /**
-     * @return whether there are bytes left in the outbound queue.
+     * Returns whether there are bytes left in the outbound queue.
+     * @return 
      */
     public boolean hasDataEnqueued() {
         this.selector.checkThread();
@@ -225,9 +212,9 @@ public class PyroClient {
     }
 
     /**
-     * Gracefully shuts down the connection. The connection is closed after the
-     * last outbound bytes are sent. Enqueuing new bytes after shutdown, is not
-     * allowed and will throw an exception
+     * Gracefully shuts down the connection.
+     * The connection is closed after the last outbound bytes are sent.
+     * Enqueuing new bytes after shutdown, is not allowed and will throw an exception
      */
     public void shutdown() {
         this.selector.checkThread();
@@ -243,34 +230,37 @@ public class PyroClient {
      */
     public void dropConnection() {
         this.selector.checkThread();
-        if (!this.isDisconnected()) {
-            Runnable drop = new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        if (PyroClient.this.key.channel().isOpen()) {
-                            PyroClient.this.key.channel().close();
-                        }
-                    } catch (IOException ex) {
-                        PyroClient.this.selector.scheduleTask(this);
-                    }
-                }
-            };
-            Thread t = new Thread(drop, "Pyro-Connection-Dropper#" + DROP_THREAD_INDEX.getAndIncrement());
-            t.start();
-            this.onConnectionError("local");
+        if (this.isDisconnected()) {
+            return;
         }
+        Runnable drop = new Runnable() {
+            @Override
+            @SuppressWarnings("synthetic-access")
+            public void run() {
+                try {
+                    if (key.channel().isOpen()) {
+                        ((SocketChannel) key.channel()).close();
+                    }
+                } catch (IOException ex) {
+                    selector().scheduleTask(this);
+                }
+            }
+        };
+        drop.run();
+        this.onConnectionError("local");
     }
 
     /**
-     * @return whether the connection is connected to a remote client.
+     * Returns whether the connection is connected to a remote client.
+     * @return 
      */
     public boolean isDisconnected() {
         this.selector.checkThread();
-        return !this.key.channel().isOpen();
+        return !((SocketChannel) this.key.channel()).isOpen();
     }
 
-    protected void onInterestOp(long now) {
+    //
+    void onInterestOp(long now) {
         if (!this.key.isValid()) {
             this.onConnectionError("remote");
         } else {
@@ -292,14 +282,17 @@ public class PyroClient {
     }
 
     protected boolean didTimeout(long now) {
-        return this.timeout != 0 && (now - this.lastEventTime) > this.timeout;
+        if (this.timeout == 0) {
+            return false; // never timeout
+        }
+        return (now - this.lastEventTime) > this.timeout;
     }
 
     private void onReadyToConnect(long now) throws IOException {
         this.selector.checkThread();
         this.lastEventTime = now;
         this.selector.adjustInterestOp(key, SelectionKey.OP_CONNECT, false);
-        ((SocketChannel) key.channel()).finishConnect();
+        ((SocketChannel) this.key.channel()).finishConnect();
         this.listeners.forEach((listener) -> {
             listener.connectedClient(this);
         });
@@ -308,7 +301,7 @@ public class PyroClient {
     private void onReadyToRead(long now) throws IOException {
         this.selector.checkThread();
         this.lastEventTime = now;
-        SocketChannel channel = (SocketChannel) key.channel();
+        SocketChannel channel = (SocketChannel) this.key.channel();
         ByteBuffer buffer = this.selector.networkBuffer;
         // read from channel
         buffer.clear();
@@ -332,23 +325,19 @@ public class PyroClient {
         buffer.flip();
         // write to channel
         if (buffer.hasRemaining()) {
-            SocketChannel channel = (SocketChannel) key.channel();
+            SocketChannel channel = (SocketChannel) this.key.channel();
             sent = channel.write(buffer);
         }
         if (sent > 0) {
             this.outbound.discard(sent);
         }
-
         for (PyroClientListener listener : this.listeners) {
             listener.sentData(this, sent);
         }
-
         this.adjustWriteOp();
-
         if (this.doShutdown && !this.outbound.hasData()) {
             this.dropConnection();
         }
-
         return sent;
     }
 
@@ -356,21 +345,25 @@ public class PyroClient {
         this.selector.checkThread();
         try {
             // if the key is invalid, the channel may remain open!!
-            this.key.channel().close();
+            ((SocketChannel) this.key.channel()).close();
         } catch (IOException ex) {
-            // type: java.io.IOException - message: "A non-blocking socket operation could not be completed immediately"
+            // message: "A non-blocking socket operation could not be completed immediately"
             // try again later
-            this.selector.scheduleTask(() -> {
-                PyroClient.this.onConnectionError(cause);
+            this.selector.scheduleTask(new Runnable() {
+                @Override
+                public void run() {
+                    PyroClient.this.onConnectionError(cause);
+                }
             });
             return;
         }
 
         if (cause instanceof ConnectException) {
             this.listeners.forEach((listener) -> {
-                listener.unconnectableClient(this, (Exception) cause);
+                listener.unconnectableClient(this);
             });
-        } else if (cause instanceof EOFException) {  // after read=-1
+        } else if (cause instanceof EOFException) {
+            // after read=-1
             this.listeners.forEach((listener) -> {
                 listener.disconnectedClient(this);
             });
@@ -379,9 +372,7 @@ public class PyroClient {
                 listener.droppedClient(this, (IOException) cause);
             });
         } else if (!(cause instanceof String)) {
-            this.listeners.forEach((listener) -> {
-                listener.unconnectableClient(this, null);
-            });
+            throw new IllegalStateException((Exception) cause);
         } else if (cause.equals("local")) {
             this.listeners.forEach((listener) -> {
                 listener.disconnectedClient(this);
@@ -412,27 +403,27 @@ public class PyroClient {
         return inetaddr.getHostAddress() + "@" + sockaddr.getPort();
     }
 
-    protected void adjustWriteOp() {
+    void adjustWriteOp() {
         this.selector.checkThread();
         boolean interested = this.outbound.hasData();
         this.selector.adjustInterestOp(this.key, SelectionKey.OP_WRITE, interested);
     }
 
-    protected static final SelectionKey bindAndConfigure(PyroSelector selector, SocketChannel channel, InetSocketAddress bind) throws IOException {
+    static final SelectionKey bindAndConfigure(PyroSelector selector, SocketChannel channel, InetSocketAddress bind) throws IOException {
         selector.checkThread();
         channel.socket().bind(bind);
         return configure(selector, channel, true);
     }
 
-    protected static final SelectionKey configure(PyroSelector selector, SocketChannel channel, boolean connect) throws IOException {
+    static final SelectionKey configure(PyroSelector selector, SocketChannel channel, boolean connect) throws IOException {
         selector.checkThread();
         channel.configureBlocking(false);
         channel.socket().setSoLinger(true, 4);
-        channel.socket().setReuseAddress(false);
+        channel.socket().setReuseAddress(true);
         channel.socket().setKeepAlive(false);
         channel.socket().setTcpNoDelay(true);
-        channel.socket().setReceiveBufferSize(selector.bufferSize);
-        channel.socket().setSendBufferSize(selector.bufferSize);
+        channel.socket().setReceiveBufferSize(PyroSelector.BUFFER_SIZE);
+        channel.socket().setSendBufferSize(PyroSelector.BUFFER_SIZE);
         int ops = SelectionKey.OP_READ;
         if (connect) {
             ops |= SelectionKey.OP_CONNECT;

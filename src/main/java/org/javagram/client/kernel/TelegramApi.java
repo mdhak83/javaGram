@@ -48,6 +48,7 @@ import org.javagram.utils.RpcCallback;
 import org.javagram.utils.RpcCallbackEx;
 import org.javagram.utils.RpcException;
 import org.javagram.utils.TimeoutException;
+
 public class TelegramApi {
 
     private static final AtomicInteger CURRENT_INSTANCES_NUMBER = new AtomicInteger(1000);
@@ -337,19 +338,15 @@ public class TelegramApi {
             }
         }, destDc, authRequired);
 
-
         try {
             resultObject = completableFuture.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Logger.w(logtag, method.toString() + " : " + e.getMessage());
-//            Logger.e(logtag, e);
         } catch (java.util.concurrent.TimeoutException e) {
             Logger.w(logtag, method.toString() + " : " + e.getMessage());
-            //Logger.e(logtag, e);
             throw e;
         } catch (ExecutionException e) {
             Logger.w(logtag, method.toString() + " : " + e.getMessage());
-            //Logger.e(logtag, e);
             if (e.getCause() instanceof RpcException) {
                 throw (RpcException) e.getCause();
             }

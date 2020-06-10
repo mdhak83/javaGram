@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.javagram.api._primitives.TLObject;
 import org.javagram.api._primitives.TLVector;
 import org.javagram.api.chat.base.TLAbsChat;
@@ -215,17 +217,21 @@ public abstract class AbstractDatabaseManager {
 
     public boolean isPeerMissing(TLAbsPeer peer) {
         synchronized(this.users) {
-            boolean isMissing = true;
-            if (peer instanceof TLPeerUser) {
-                isMissing = this.getUserById(((TLPeerUser) peer).getUserId()) == null;
-            } else if (peer instanceof TLPeerChat) {
-                isMissing = this.getChatById(((TLPeerChat) peer).getChatId(), false) == null;
-            } else if (peer instanceof TLPeerChannel) {
-                isMissing = this.getChatById(((TLPeerChannel) peer).getChannelId(), true) == null;
-            } else {
-                BotLogger.warning(LOGTAG, "!! Peer " + (peer != null ? peer.toString() : "null"));
+            try {
+                boolean isMissing = true;
+                if (peer instanceof TLPeerUser) {
+                    isMissing = this.getUserById(((TLPeerUser) peer).getUserId()) == null;
+                } else if (peer instanceof TLPeerChat) {
+                    isMissing = this.getChatById(((TLPeerChat) peer).getChatId(), false) == null;
+                } else if (peer instanceof TLPeerChannel) {
+                    isMissing = this.getChatById(((TLPeerChannel) peer).getChannelId(), true) == null;
+                } else {
+                    BotLogger.warning(LOGTAG, "!! Peer " + (peer != null ? peer.toString() : "null"));
+                }
+                return isMissing;
+            } catch (Exception ex) {
+                return true;
             }
-            return isMissing;
         }
     }
 
@@ -311,7 +317,7 @@ public abstract class AbstractDatabaseManager {
         return ret;
     }
     
-    public TLAbsChat getChatById(int chatId, Boolean isChannel) {
+    public TLAbsChat getChatById(int chatId, Boolean isChannel) throws Exception {
         TLAbsChat ret;
         synchronized(this.chats) {
             ret = this.chats.get(chatId);
@@ -345,6 +351,7 @@ public abstract class AbstractDatabaseManager {
                 }
             } catch (Exception ex) {
                 BotLogger.error(LOGTAG, "[AbstractDatabaseManager::getChatById] Impossible to retrieve Chat#" + String.format("%08x", chatId));
+                throw ex;
             }
         }
         return ret;

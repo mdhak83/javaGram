@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class ByteBufferDesc {
+    
     public ByteBuffer buffer;
     private boolean justCalc;
     private int len;
@@ -128,7 +129,7 @@ public class ByteBufferDesc {
     }
 
     public void writeByte(int i) {
-        writeByte((byte)i);
+        this.writeByte((byte) i);
     }
 
     public void writeByte(byte b) {
@@ -145,7 +146,7 @@ public class ByteBufferDesc {
 
     public void writeString(String s) {
         try {
-            writeByteArray(s.getBytes("UTF-8"));
+            this.writeByteArray(s.getBytes("UTF-8"));
         } catch(Exception e) {
             Logger.w("tmessages", "write string error");
         }
@@ -227,7 +228,7 @@ public class ByteBufferDesc {
 
     public void writeDouble(double d) {
         try {
-            writeInt64(Double.doubleToRawLongBits(d));
+            this.writeInt64(Double.doubleToRawLongBits(d));
         } catch(Exception e) {
             Logger.w("tmessages", "write double error");
         }
@@ -293,13 +294,12 @@ public class ByteBufferDesc {
     }
 
     public void skip(int count) {
-        if (count == 0) {
-            return;
-        }
-        if (this.justCalc) {
-            this.len += count;
-        } else {
-            this.buffer.position(this.buffer.position() + count);
+        if (count != 0) {
+            if (this.justCalc) {
+                this.len += count;
+            } else {
+                this.buffer.position(this.buffer.position() + count);
+            }
         }
     }
 
@@ -321,18 +321,17 @@ public class ByteBufferDesc {
     }
 
     public boolean readBool(boolean exception) {
-        int consructor = readInt32(exception);
-        if (consructor == 0x997275b5) {
+        int constructor = this.readInt32(exception);
+        if (constructor == 0x997275b5) {
             return true;
-        }
-        if (consructor == 0xbc799737) {
+        } else if (constructor == 0xbc799737) {
+            return false;
+        } else if (exception) {
+            throw new RuntimeException("Not bool value!");
+        } else {
+            Logger.w("tmessages", "Not bool value!");
             return false;
         }
-        if (exception) {
-            throw new RuntimeException("Not bool value!");
-        }
-        Logger.w("tmessages", "Not bool value!");
-        return false;
     }
 
     public long readInt64(boolean exception) {
@@ -362,7 +361,7 @@ public class ByteBufferDesc {
 
     public byte[] readData(int count, boolean exception) {
         final byte[] arr = new byte[count];
-        readRaw(arr, exception);
+        this.readRaw(arr, exception);
         return arr;
     }
 
@@ -395,9 +394,9 @@ public class ByteBufferDesc {
     public byte[] readByteArray(boolean exception) {
         try {
             int sl = 1;
-            int l = getIntFromByte(this.buffer.get());
+            int l = this.getIntFromByte(this.buffer.get());
             if (l >= 254) {
-                l = getIntFromByte(this.buffer.get()) | (getIntFromByte(this.buffer.get()) << 8) | (getIntFromByte(this.buffer.get()) << 16);
+                l = this.getIntFromByte(this.buffer.get()) | (this.getIntFromByte(this.buffer.get()) << 8) | (this.getIntFromByte(this.buffer.get()) << 16);
                 sl = 4;
             }
             final byte[] b = new byte[l];
@@ -421,9 +420,9 @@ public class ByteBufferDesc {
     public ByteBufferDesc readByteBuffer(boolean exception) {
         try {
             int sl = 1;
-            int l = getIntFromByte(this.buffer.get());
+            int l = this.getIntFromByte(this.buffer.get());
             if (l >= 254) {
-                l = getIntFromByte(this.buffer.get()) | (getIntFromByte(this.buffer.get()) << 8) | (getIntFromByte(this.buffer.get()) << 16);
+                l = this.getIntFromByte(this.buffer.get()) | (this.getIntFromByte(this.buffer.get()) << 8) | (this.getIntFromByte(this.buffer.get()) << 16);
                 sl = 4;
             }
             final ByteBufferDesc b = BuffersStorage.getInstance().getFreeBuffer(l);
@@ -462,4 +461,5 @@ public class ByteBufferDesc {
         }
         return 0;
     }
+
 }

@@ -1,3 +1,6 @@
+/*
+ * Created on 26 apr 2010
+ */
 package org.javagram.pyronet;
 
 import java.io.IOException;
@@ -5,11 +8,17 @@ import java.nio.ByteBuffer;
 
 public interface PyroClientListener {
 
-    void connectedClient(PyroClient client);
-    void unconnectableClient(PyroClient client, Exception cause);
-    void droppedClient(PyroClient client, IOException cause);
-    void disconnectedClient(PyroClient client);
-    void receivedData(PyroClient client, ByteBuffer data);
-    void sentData(PyroClient client, int bytes);
+    public void connectedClient(PyroClient client);
+
+    public void unconnectableClient(PyroClient client);
+
+    public void droppedClient(PyroClient client, IOException cause);
+
+    public void disconnectedClient(PyroClient client);
+
+    //
+    public void receivedData(PyroClient client, ByteBuffer data);
+
+    public void sentData(PyroClient client, int bytes);
 
 }

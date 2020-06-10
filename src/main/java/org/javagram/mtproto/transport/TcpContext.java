@@ -11,13 +11,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.javagram.pyronet.PyroClient;
-import org.javagram.pyronet.PyroClientListener;
 import org.javagram.pyronet.PyroSelector;
+import org.javagram.pyronet.PyroClientListener;
 
 public class TcpContext implements PyroClientListener {
 
     private static volatile Integer NextChannelToken = 1;
-    private static final int MAX_PACKED_SIZE = 1024 * 1024 * 1024;//1 MB
+    private static final int MAX_PACKED_SIZE = 1024 * 1024;//1 MB
     private static final AtomicInteger CONTEXT_LAST_ID = new AtomicInteger(1);
     private static final int CONNECTION_TIMEOUT = 30000;
     private final static AtomicInteger SELECTOR_THREAD_INDEX = new AtomicInteger(0);
@@ -261,7 +261,7 @@ public class TcpContext implements PyroClientListener {
         this.selector.scheduleTask(() -> {
             if ((this.connectionState == ConnectionState.TcpConnectionStageIdle) ||
                 (this.connectionState == ConnectionState.TcpConnectionStageReconnecting) ||
-                (this.connectionState == ConnectionState.TcpConnectionStageSuspended) || (client == null)) {
+                (this.connectionState == ConnectionState.TcpConnectionStageSuspended) || (this.client == null)) {
                 this.connect();
             }
 
@@ -325,7 +325,7 @@ public class TcpContext implements PyroClientListener {
     }
 
     @Override
-    public void unconnectableClient(PyroClient client, Exception cause) {
+    public void unconnectableClient(PyroClient client) {
         this.handleDisconnect(client, false);
     }
 
@@ -357,7 +357,7 @@ public class TcpContext implements PyroClientListener {
 
     //endregion PyroClient Overrides
 
-    private synchronized void handleDisconnect(PyroClient client, boolean timeout) {
+    private void handleDisconnect(PyroClient client, boolean timeout) {
         synchronized(this.timerSync) {
             if (this.reconnectTimer != null) {
                 this.reconnectTimer.cancel();
@@ -438,7 +438,7 @@ public class TcpContext implements PyroClientListener {
                 Logger.d(TcpContext.this.TAG, String.format(TcpContext.this + " Connecting (%s:%d)", ip, port));
                 this.isFirstPackage = true;
                 if (this.restOfTheData != null) {
-                    BuffersStorage.getInstance().reuseFreeBuffer(restOfTheData);
+                    BuffersStorage.getInstance().reuseFreeBuffer(this.restOfTheData);
                     this.restOfTheData = null;
                 }
                 this.lastPacketLength = 0;
@@ -449,7 +449,7 @@ public class TcpContext implements PyroClientListener {
                     this.client = null;
                 }
                 this.client = this.selector.connect(new InetSocketAddress(ip, port));
-                this.client.addListener(TcpContext.this);
+                this.client.addListener(this);
                 this.client.setTimeout(CONNECTION_TIMEOUT);
                 this.selector.wakeup();
             } catch (Exception e) {
@@ -492,21 +492,18 @@ public class TcpContext implements PyroClientListener {
             this.reconnectTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    selector.scheduleTask(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                synchronized (timerSync) {
-                                    if (reconnectTimer != null) {
-                                        reconnectTimer.cancel();
-                                        reconnectTimer = null;
-                                    }
+                    selector.scheduleTask(() -> {
+                        try {
+                            synchronized (timerSync) {
+                                if (reconnectTimer != null) {
+                                    reconnectTimer.cancel();
+                                    reconnectTimer = null;
                                 }
-                            } catch (Exception e2) {
-                                Logger.e(TcpContext.this.TAG, e2);
                             }
-                            connect();
+                        } catch (Exception e2) {
+                            Logger.e(TcpContext.this.TAG, e2);
                         }
+                        connect();
                     });
                 }
             }, (this.failedConnectionCount >= 3) ? 500 : 300, (this.failedConnectionCount >= 3) ? 500 : 300);
@@ -523,11 +520,8 @@ public class TcpContext implements PyroClientListener {
 
     public void suspendConnection(boolean task) {
         if (task) {
-            this.selector.scheduleTask(new Runnable() {
-                @Override
-                public void run() {
-                    suspendConnectionInternal();
-                }
+            this.selector.scheduleTask(() -> {
+                suspendConnectionInternal();
             });
         } else {
             this.suspendConnectionInternal();

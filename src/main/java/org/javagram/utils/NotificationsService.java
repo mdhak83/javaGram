@@ -3,14 +3,9 @@ package org.javagram.utils;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-/**
- * @author Ruben Bermudez
- * @version 1.0
- * @brief Notifications service
- * @date 28 of August of 2015
- */
 public class NotificationsService {
-    private static final String LOGTAG = "NOTIFICATIONSSERVICE";
+    
+    private static final String LOGTAG = "[NotificationsService]";
     private static NotificationsService instance;
 
     private static int notificationsCounter;
@@ -19,59 +14,55 @@ public class NotificationsService {
 
     private final NotificationsThread thread;
     private final ConcurrentLinkedDeque<Notification> notificationsQueue = new ConcurrentLinkedDeque<>();
-    private final ConcurrentHashMap<Integer, ConcurrentLinkedDeque<NotificationObserver>> observers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer /*notificationId*/, ConcurrentLinkedDeque<NotificationObserver>> observers = new ConcurrentHashMap<>();
 
     private NotificationsService() {
         this.thread = new NotificationsThread();
         this.thread.start();
     }
 
-    public static NotificationsService getInstance() {
+    public static synchronized NotificationsService getInstance() {
         if (instance == null) {
-            synchronized (NotificationsService.class) {
-                if (instance == null) {
-                    instance = new NotificationsService();
-                }
-            }
+            instance = new NotificationsService();
         }
         return instance;
     }
 
     public void addObserver(NotificationObserver observer, int notificationId) {
-        synchronized (observers) {
-            if (observers.containsKey(notificationId)) {
-                if (!observers.get(notificationId).contains(observer)) {
-                    observers.get(notificationId).add(observer);
+        synchronized(this.observers) {
+            if (this.observers.containsKey(notificationId)) {
+                if (!this.observers.get(notificationId).contains(observer)) {
+                    this.observers.get(notificationId).add(observer);
                 }
             } else {
                 final ConcurrentLinkedDeque<NotificationObserver> newObservers = new ConcurrentLinkedDeque<>();
                 newObservers.add(observer);
-                observers.put(notificationId, newObservers);
+                this.observers.put(notificationId, newObservers);
             }
         }
     }
 
     public void removeObserver(NotificationObserver observer, int notificationId) {
-        synchronized (observers) {
-            if (observers.containsKey(notificationId)) {
-                observers.get(notificationId).remove(observer);
+        synchronized(this.observers) {
+            if (this.observers.containsKey(notificationId)) {
+                this.observers.get(notificationId).remove(observer);
             }
         }
     }
 
     public void postNotification(int notificationId, Object... args) {
         final Notification notification = new Notification(notificationId, args);
-        notificationsQueue.addLast(notification);
-        synchronized (notificationsQueue) {
-            notificationsQueue.notifyAll();
+        synchronized(this.notificationsQueue) {
+            this.notificationsQueue.addLast(notification);
+            this.notificationsQueue.notifyAll();
         }
     }
 
     private void handleNotification(Notification notification) {
         ConcurrentLinkedDeque<NotificationObserver> notificationObservers = null;
-        synchronized (observers) {
-            if (observers.containsKey(notification.notificationId)) {
-                notificationObservers = observers.get(notification.notificationId);
+        synchronized(this.observers) {
+            if (this.observers.containsKey(notification.notificationId)) {
+                notificationObservers = this.observers.get(notification.notificationId);
             }
         }
 
@@ -87,6 +78,7 @@ public class NotificationsService {
     }
 
     private static class Notification {
+        
         public int notificationId;
         public Object[] args;
 
@@ -94,9 +86,11 @@ public class NotificationsService {
             this.notificationId = notificationId;
             this.args = args;
         }
+        
     }
 
     private class NotificationsThread extends Thread {
+        
         public NotificationsThread() {
             super();
             this.setName("NotificationsThread#" + this.getId());
@@ -106,19 +100,20 @@ public class NotificationsService {
         public void run() {
             Notification currentNotification;
             while (true) {
-                currentNotification = notificationsQueue.pollFirst();
+                currentNotification = NotificationsService.this.notificationsQueue.pollFirst();
                 if (currentNotification == null) {
                     try {
-                        synchronized (notificationsQueue) {
-                            notificationsQueue.wait();
+                        synchronized(NotificationsService.this.notificationsQueue) {
+                            NotificationsService.this.notificationsQueue.wait();
                         }
                     } catch (InterruptedException e) {
                         BotLogger.error(LOGTAG, e);
                     }
                 } else {
-                    handleNotification(currentNotification);
+                    NotificationsService.this.handleNotification(currentNotification);
                 }
             }
         }
     }
+
 }

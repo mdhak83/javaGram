@@ -4,21 +4,18 @@ import org.javagram.mtproto.log.Logger;
 import org.javagram.mtproto.state.ConnectionInfo;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
+import java.util.Map;
 
 public class TransportRate {
 
     private static final String LOGTAG = "[TransportRate]";
 
-    private final HashMap<Integer, Transport> transports = new HashMap<>();
-    private final Random rnd = new Random();
+    private final Map<Integer, Transport> transports = new HashMap<>();
 
     public TransportRate(ConnectionInfo[] connectionInfos) {
         int min = Integer.MAX_VALUE;
-        int max = Integer.MIN_VALUE;
         for (ConnectionInfo connectionInfo : connectionInfos) {
             min = Math.min(connectionInfo.getPriority(), min);
-            max = Math.max(connectionInfo.getPriority(), max);
         }
         for (ConnectionInfo connectionInfo : connectionInfos) {
             this.transports.put(connectionInfo.getId(), new Transport(new ConnectionType(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionType.TYPE_TCP), connectionInfo.getPriority() - min + 1));

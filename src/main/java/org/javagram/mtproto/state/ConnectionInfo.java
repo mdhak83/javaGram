@@ -1,16 +1,14 @@
 package org.javagram.mtproto.state;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 07.11.13
- * Time: 7:26
- */
 public class ConnectionInfo {
-    private int id;
-    private int priority;
-    private String address;
-    private int port;
+    
+    /**
+     * id=0 for MemoryProtoState connection ; 
+     */
+    private final int id;
+    private final int priority;
+    private final String address;
+    private final int port;
 
     public ConnectionInfo(int id, int priority, String address, int port) {
         this.id = id;
@@ -34,4 +32,5 @@ public class ConnectionInfo {
     public int getId() {
         return this.id;
     }
+
 }

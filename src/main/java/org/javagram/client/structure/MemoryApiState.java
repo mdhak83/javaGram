@@ -227,18 +227,18 @@ public class MemoryApiState extends TLPersistence<TLStorage> implements AbsApiSt
 
         // Maximum version addresses
         HashMap<String, DcAddress> mainAddresses = new HashMap<>();
-        for (TLDcInfo i : infos) {
-            if (i.getVersion() != maxVersion) {
+        for (TLDcInfo dcInfo : infos) {
+            if (dcInfo.getVersion() != maxVersion) {
                 continue;
             }
 
-            if (mainAddresses.containsKey(i.getAddress())) {
-                mainAddresses.get(i.getAddress()).ports.put(i.getPort(), 1);
+            if (mainAddresses.containsKey(dcInfo.getAddress())) {
+                mainAddresses.get(dcInfo.getAddress()).ports.put(dcInfo.getPort(), 1);
             } else {
                 DcAddress address = new DcAddress();
-                address.ports.put(i.getPort(), 1);
-                address.host = i.getAddress();
-                mainAddresses.put(i.getAddress(), address);
+                address.ports.put(dcInfo.getPort(), 1);
+                address.host = dcInfo.getAddress();
+                mainAddresses.put(dcInfo.getAddress(), address);
             }
         }
 

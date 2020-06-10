@@ -194,7 +194,7 @@ public class MTProto {
         return this.isClosed;
     }
 
-    public void closeConnections() {
+    private void closeConnections() {
         synchronized (this.contexts) {
             this.contexts.stream().forEachOrdered(context -> {
                 context.suspendConnection(true);
@@ -833,6 +833,7 @@ public class MTProto {
                 }
             }
             MTProto.this.contexts.forEach(context -> {
+                context.suspendConnection(true);
                 context.close();
             });
         }
@@ -911,7 +912,10 @@ public class MTProto {
                     // Informs ConnectionFixerThread
                     MTProto.this.contexts.notifyAll();
                     MTProto.this.scheduler.onConnectionDies(context.getContextId());
-                    //context.close();
+                    if (Logger.LOG_THREADS) {
+                        Logger.d(MTProto.this.logtag, "Closing current TcpContext.");
+                    }
+                    context.close();
                 }
             }
         }
@@ -947,7 +951,10 @@ public class MTProto {
             }
             MTProto.this.scheduler.onConnectionDies(context.getContextId());
             requestSchedule();
-            //context.close();
+            if (Logger.LOG_THREADS) {
+                Logger.d(MTProto.this.logtag, "Closing current TcpContext.");
+            }
+            context.close();
         }
 
         @Override

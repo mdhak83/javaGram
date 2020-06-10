@@ -144,7 +144,7 @@ public class PyroSelector {
                     }
                 } catch (Exception ex) {
                     // this never be caused by Pyro-code
-                    throw new IllegalStateException(ex);
+                    //throw new IllegalStateException(ex);
                 }
             }
         }, name).start();

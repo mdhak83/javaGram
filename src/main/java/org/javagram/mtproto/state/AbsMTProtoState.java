@@ -1,28 +1,19 @@
 package org.javagram.mtproto.state;
 
 import org.javagram.mtproto.time.TimeOverlord;
-
 import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 07.11.13
- * Time: 7:15
- */
 public abstract class AbsMTProtoState {
 
     public abstract byte[] getAuthKey();
-
     public abstract ConnectionInfo[] getAvailableConnections();
-
     public abstract KnownSalt[] readKnownSalts();
-
     protected abstract void writeKnownSalts(KnownSalt[] salts);
 
     public void mergeKnownSalts(int currentTime, KnownSalt[] salts) {
-        KnownSalt[] knownSalts = readKnownSalts();
-        HashMap<Long, KnownSalt> ids = new HashMap<>();
+        KnownSalt[] knownSalts = this.readKnownSalts();
+        Map<Long, KnownSalt> ids = new HashMap<>();
         for (KnownSalt s : knownSalts) {
             if (s.getValidUntil() >= currentTime) {
                 ids.put(s.getSalt(), s);
@@ -78,4 +69,5 @@ public abstract class AbsMTProtoState {
         }
         return max;
     }
+
 }

@@ -18,38 +18,50 @@ public class TransportRate {
             min = Math.min(connectionInfo.getPriority(), min);
         }
         for (ConnectionInfo connectionInfo : connectionInfos) {
-            this.transports.put(connectionInfo.getId(), new Transport(new ConnectionType(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionType.TYPE_TCP), connectionInfo.getPriority() - min + 1));
+            synchronized(this.transports) {
+                this.transports.put(connectionInfo.getId(), new Transport(new ConnectionType(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionType.TYPE_TCP), connectionInfo.getPriority() - min + 1));
+            }
         }
         this.normalize();
     }
 
-    public synchronized ConnectionType tryConnection() {
-        Transport[] currentTransports = this.transports.values().toArray(new Transport[0]);
-        Arrays.sort(currentTransports, (Transport transport, Transport transport2) -> -Float.compare(transport.getRate(), transport2.getRate()));
-        ConnectionType type = currentTransports[0].getConnectionType();
+    public ConnectionType tryConnection() {
+        Transport[] currentTransports;
+        ConnectionType type;
+        synchronized(this.transports) {
+            currentTransports = this.transports.values().toArray(new Transport[0]);
+            Arrays.sort(currentTransports, (Transport transport, Transport transport2) -> -Float.compare(transport.getRate(), transport2.getRate()));
+            type = currentTransports[0].getConnectionType();
+        }
         Logger.d(LOGTAG, "tryConnection #" + type.getId());
         return type;
     }
 
-    public synchronized void onConnectionFailure(int id) {
-        Logger.d(LOGTAG, "onConnectionFailure #" + id);
-        this.transports.get(id).rate *= 0.5;
+    public void onConnectionFailure(int transportId) {
+        Logger.d(LOGTAG, "onConnectionFailure #" + transportId);
+        synchronized(this.transports) {
+            this.transports.get(transportId).rate *= 0.5;
+        }
         this.normalize();
     }
 
-    public synchronized void onConnectionSuccess(int id) {
-        Logger.d(LOGTAG, "onConnectionSuccess #" + id);
-        this.transports.get(id).rate *= 1.0;
+    public void onConnectionSuccess(int transportId) {
+        Logger.d(LOGTAG, "onConnectionSuccess #" + transportId);
+        synchronized(this.transports) {
+            this.transports.get(transportId).rate *= 1.0;
+        }
         this.normalize();
     }
 
     private synchronized void normalize() {
         float sum = 0;
-        sum = this.transports.keySet().stream().map((id) -> this.transports.get(id).rate).reduce(sum, (accumulator, _item) -> accumulator + _item);
-        for (Integer id : this.transports.keySet()) {
-            Transport transport = this.transports.get(id);
-            transport.rate /= sum;
-            Logger.d(LOGTAG, "Transport: #" + transport.connectionType.getId() + " " + transport.connectionType.getHost() + ":" + transport.getConnectionType().getPort() + " #" + transport.getRate());
+        synchronized(this.transports) {
+            sum = this.transports.keySet().stream().map((id) -> this.transports.get(id).rate).reduce(sum, (accumulator, _item) -> accumulator + _item);
+            for (Integer id : this.transports.keySet()) {
+                Transport transport = this.transports.get(id);
+                transport.rate /= sum;
+                Logger.d(LOGTAG, "Transport: #" + transport.connectionType.getId() + " " + transport.connectionType.getHost() + ":" + transport.getConnectionType().getPort() + " #" + transport.getRate());
+            }
         }
     }
 
@@ -78,6 +90,7 @@ public class TransportRate {
         public void setRate(float rate) {
             this.rate = rate;
         }
+        
     }
 
 }

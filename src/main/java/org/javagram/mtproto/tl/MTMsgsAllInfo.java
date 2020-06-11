@@ -19,16 +19,16 @@ import static org.javagram.utils.StreamingUtils.writeTLVector;
  * @brief Voluntary Communication of Status of Messages
  * @date 20/02/15
  */
-public class MTMessagesAllInfo extends TLObject {
+public class MTMsgsAllInfo extends TLObject {
     public static final int CLASS_ID = 0x8cc0d131;
 
     private TLLongVector msgIds;
     private String info;
 
-    public MTMessagesAllInfo() {
+    public MTMsgsAllInfo() {
     }
 
-    public MTMessagesAllInfo(TLLongVector msgIds, String info) {
+    public MTMsgsAllInfo(TLLongVector msgIds, String info) {
         this.msgIds = msgIds;
         this.info = info;
     }

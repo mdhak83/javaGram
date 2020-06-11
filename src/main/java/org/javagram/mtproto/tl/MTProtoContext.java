@@ -13,12 +13,11 @@ public class MTProtoContext extends TLContext {
         registerClass(MTNewSessionCreated.CLASS_ID, MTNewSessionCreated.class);
         registerClass(MTBadMessageNotification.CLASS_ID, MTBadMessageNotification.class);
         registerClass(MTBadServerSalt.CLASS_ID, MTBadServerSalt.class);
-        registerClass(MTDestroySessionOk.CLASS_ID, MTDestroySessionOk.class);
-        registerClass(MTDestroySessionNone.CLASS_ID, MTDestroySessionNone.class);
         registerClass(MTMessageCopy.CLASS_ID, MTMessageCopy.class);
-        registerClass(MTNewMessageDetailedInfo.CLASS_ID, MTNewMessageDetailedInfo.class);
-        registerClass(MTMessageDetailedInfo.CLASS_ID, MTMessageDetailedInfo.class);
-        registerClass(MTNeedResendMessage.CLASS_ID, MTNeedResendMessage.class);
+        registerClass(MTMsgNewDetailedInfo.CLASS_ID, MTMsgNewDetailedInfo.class);
+        registerClass(MTMsgDetailedInfo.CLASS_ID, MTMsgDetailedInfo.class);
+        registerClass(MTMsgResendReq.CLASS_ID, MTMsgResendReq.class);
+        registerClass(MTMsgResendAnsReq.CLASS_ID, MTMsgResendAnsReq.class);
         registerClass(MTMessagesContainer.CLASS_ID, MTMessagesContainer.class);
         registerClass(MTRpcError.CLASS_ID, MTRpcError.class);
         registerClass(MTRpcDropAnswer.CLASS_ID, MTRpcDropAnswer.class);
@@ -27,12 +26,14 @@ public class MTProtoContext extends TLContext {
         registerClass(MTRpcAnswerDroppedRunning.CLASS_ID, MTRpcAnswerDroppedRunning.class);
         registerClass(MTRpcAnswerDropped.CLASS_ID, MTRpcAnswerDropped.class);
         registerClass(MTDestroySession.CLASS_ID, MTDestroySession.class);
+        registerClass(MTDestroySessionOk.CLASS_ID, MTDestroySessionOk.class);
+        registerClass(MTDestroySessionNone.CLASS_ID, MTDestroySessionNone.class);
         registerClass(MTHttpWait.CLASS_ID, MTHttpWait.class);
         registerClass(MTGetFutureSalts.CLASS_ID, MTGetFutureSalts.class);
         registerClass(MTFutureSalt.CLASS_ID, MTFutureSalt.class);
         registerClass(MTFutureSalts.CLASS_ID, MTFutureSalts.class);
-        registerClass(MTMessagesAllInfo.CLASS_ID, MTMessagesAllInfo.class);
-        registerClass(MTMessagesStateInfo.CLASS_ID, MTMessagesStateInfo.class);
+        registerClass(MTMsgsAllInfo.CLASS_ID, MTMsgsAllInfo.class);
+        registerClass(MTMsgsStateInfo.CLASS_ID, MTMsgsStateInfo.class);
         registerClass(MTMsgsStateReq.CLASS_ID, MTMsgsStateReq.class);
     }
 

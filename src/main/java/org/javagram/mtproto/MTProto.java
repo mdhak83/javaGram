@@ -1,7 +1,7 @@
 package org.javagram.mtproto;
 
 import org.javagram.mtproto.backoff.ApiErrorExponentialBackoff;
-import org.javagram.mtproto.backoff.ExponentalBackoff;
+import org.javagram.mtproto.backoff.ExponentialBackoff;
 import org.javagram.mtproto.log.Logger;
 import org.javagram.mtproto.schedule.PrepareSchedule;
 import org.javagram.mtproto.schedule.PreparedPackage;
@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.javagram.MyTLAppConfiguration;
 import org.javagram.mtproto.secure.CryptoUtils;
 import org.javagram.mtproto.tl.MTBadMessage;
@@ -37,11 +38,11 @@ import org.javagram.mtproto.tl.MTFutureSalts;
 import org.javagram.mtproto.tl.MTGetFutureSalts;
 import org.javagram.mtproto.tl.MTMessage;
 import org.javagram.mtproto.tl.MTMessageCopy;
-import org.javagram.mtproto.tl.MTMessageDetailedInfo;
+import org.javagram.mtproto.tl.MTMsgDetailedInfo;
 import org.javagram.mtproto.tl.MTMessagesContainer;
 import org.javagram.mtproto.tl.MTMsgsAck;
-import org.javagram.mtproto.tl.MTNeedResendMessage;
-import org.javagram.mtproto.tl.MTNewMessageDetailedInfo;
+import org.javagram.mtproto.tl.MTMsgResendReq;
+import org.javagram.mtproto.tl.MTMsgNewDetailedInfo;
 import org.javagram.mtproto.tl.MTNewSessionCreated;
 import org.javagram.mtproto.tl.MTPing;
 import org.javagram.mtproto.tl.MTPingDelayDisconnect;
@@ -64,17 +65,19 @@ public class MTProto {
     private static final int MAX_INTERNAL_FLOOD_WAIT_SECONDS = 10;
     private static final int PING_INTERVAL_REQUEST = 60000;
     private static final int PING_INTERVAL_SECONDS = 75;
-    private static final int ERROR_MSG_ID_TOO_SMALL = 16;
-    private static final int ERROR_MSG_ID_TOO_BIG = 17;
+
+    private static final int ERROR_MSG_ID_TOO_LOW = 16;
+    private static final int ERROR_MSG_ID_TOO_HIGH = 17;
     private static final int ERROR_MSG_ID_BITS = 18;
     private static final int ERROR_CONTAINER_MSG_ID_INCORRECT = 19;
     private static final int ERROR_TOO_OLD = 20;
-    private static final int ERROR_SEQ_NO_TOO_SMALL = 32;
-    private static final int ERROR_SEQ_NO_TOO_BIG = 33;
+    private static final int ERROR_SEQ_NO_TOO_LOW = 32;
+    private static final int ERROR_SEQ_NO_TOO_HIGH = 33;
     private static final int ERROR_SEQ_EXPECTED_EVEN = 34;
     private static final int ERROR_SEQ_EXPECTED_ODD = 35;
-    private static final int ERROR_BAD_SERVER_SALT = 48;
-    private static final int ERROR_BAD_CONTAINER = 64;
+    private static final int ERROR_INCORRECT_SERVER_SALT = 48;
+    private static final int ERROR_INVALID_CONTAINER = 64;
+    
     private static final int PING_TIMEOUT = 60 * 1000;
     private static final int RESEND_TIMEOUT = 60 * 1000;
     private static final int FUTURE_REQUEST_COUNT = 64;
@@ -100,22 +103,14 @@ public class MTProto {
     private final byte[] authKey;
     private final byte[] authKeyId;
     private byte[] session;
-
-    private AtomicBoolean isClosed = new AtomicBoolean(false);
-
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final MTProtoCallback callback;
-
     private final AbsMTProtoState state;
-
     private long futureSaltsRequestedTime = 0L;
-
     private int roundRobin;
-
     private TransportRate connectionRate;
-
-    private long lastPingTime = (System.nanoTime() / 1000000L) - (PING_INTERVAL_REQUEST * 10);
-
-    private final ExponentalBackoff exponentalBackoff;
+    private final AtomicLong lastPingTime = new AtomicLong((System.nanoTime() / 1000000L) - (PING_INTERVAL_REQUEST * 10));
+    private final ExponentialBackoff exponentialBackoff;
     private final ApiErrorExponentialBackoff apiErrorExponentialBackoff;
     private final ConcurrentLinkedQueue<Long> newSessionsIds = new ConcurrentLinkedQueue<>();
 
@@ -123,7 +118,7 @@ public class MTProto {
         this.instanceIndex = INSTANCE_INDEX.incrementAndGet();
         this.logtag = "MTProto#" + this.instanceIndex;
         this.config = config;
-        this.exponentalBackoff = new ExponentalBackoff(this.logtag + "#BackOff");
+        this.exponentialBackoff = new ExponentialBackoff(this.logtag + "#BackOff");
         this.apiErrorExponentialBackoff = new ApiErrorExponentialBackoff();
         this.state = state;
         this.connectionRate = new TransportRate(state.getAvailableConnections());
@@ -158,7 +153,7 @@ public class MTProto {
     }
 
     public void resetNetworkBackoff() {
-        this.exponentalBackoff.reset();
+        this.exponentialBackoff.reset();
     }
 
     public void reloadConnectionInformation() {
@@ -195,7 +190,7 @@ public class MTProto {
     }
 
     private void closeConnections() {
-        synchronized (this.contexts) {
+        synchronized(this.contexts) {
             this.contexts.stream().forEachOrdered(context -> {
                 context.suspendConnection(true);
                 this.scheduler.onConnectionDies(context.getContextId());
@@ -234,10 +229,9 @@ public class MTProto {
     public int sendMessage(TLObject request, long timeout, boolean isRpc, boolean highPriority) {
         final int id = this.scheduler.postMessage(request, isRpc, timeout, highPriority);
         Logger.d(this.logtag, "sendMessage #" + id + " " + request.toString());
-        synchronized (this.scheduler) {
+        synchronized(this.scheduler) {
             this.scheduler.notifyAll();
         }
-
         return id;
     }
 
@@ -287,17 +281,17 @@ public class MTProto {
             if (time != 0) {
                 long delta = System.nanoTime() / 1000000 - time;
                 switch (badMessage.getErrorCode()) {
-                    case ERROR_MSG_ID_TOO_BIG:
-                    case ERROR_MSG_ID_TOO_SMALL:
+                    case ERROR_MSG_ID_TOO_HIGH:
+                    case ERROR_MSG_ID_TOO_LOW:
                         TimeOverlord.getInstance().onForcedServerTimeArrived((msgId >> 32) * 1000, delta);
-                        if (badMessage.getErrorCode() == ERROR_MSG_ID_TOO_BIG) {
+                        if (badMessage.getErrorCode() == ERROR_MSG_ID_TOO_HIGH) {
                             this.scheduler.resetMessageId();
                         }
                         this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
                         this.requestSchedule();
                         break;
-                    case ERROR_SEQ_NO_TOO_BIG:
-                    case ERROR_SEQ_NO_TOO_SMALL:
+                    case ERROR_SEQ_NO_TOO_HIGH:
+                    case ERROR_SEQ_NO_TOO_LOW:
                         if (this.scheduler.isMessageFromCurrentGeneration(badMessage.getBadMsgId())) {
                             Logger.d(this.logtag, "Resetting session");
                             this.session = Entropy.getInstance().generateSeed(8);
@@ -306,7 +300,7 @@ public class MTProto {
                         this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
                         this.requestSchedule();
                         break;
-                    case ERROR_BAD_SERVER_SALT:
+                    case ERROR_INCORRECT_SERVER_SALT:
                         long salt = badMessage.getNewServerSalt();
                         // Sync time
                         TimeOverlord.getInstance().onMethodExecuted(badMessage.getBadMsgId(), msgId, delta);
@@ -315,7 +309,7 @@ public class MTProto {
                         this.scheduler.resendAsNewMessage(badMessage.getBadMsgId());
                         this.requestSchedule();
                         break;
-                    case ERROR_BAD_CONTAINER:
+                    case ERROR_INVALID_CONTAINER:
                     case ERROR_CONTAINER_MSG_ID_INCORRECT:
                         this.scheduler.resendMessage(badMessage.getBadMsgId());
                         this.requestSchedule();
@@ -453,27 +447,27 @@ public class MTProto {
                 TimeOverlord.getInstance().onForcedServerTimeArrived(salts.getNow(), delta);
                 this.state.mergeKnownSalts(salts.getNow(), knownSalts);
             }
-        } else if (object instanceof MTMessageDetailedInfo) {
-            final MTMessageDetailedInfo detailedInfo = (MTMessageDetailedInfo) object;
+        } else if (object instanceof MTMsgDetailedInfo) {
+            final MTMsgDetailedInfo detailedInfo = (MTMsgDetailedInfo) object;
             Logger.d(this.logtag, "msg_detailed_info: " + detailedInfo.getMsgId() + ", answer: " + detailedInfo.getAnswerMsgId());
             if (this.receivedMessages.contains(detailedInfo.getAnswerMsgId())) {
                 this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
             } else {
                 int id = this.scheduler.mapSchedulerId(detailedInfo.getMsgId());
                 if (id > 0) {
-                    this.scheduler.postMessage(new MTNeedResendMessage(new long[]{detailedInfo.getAnswerMsgId()}), false, RESEND_TIMEOUT);
+                    this.scheduler.postMessage(new MTMsgResendReq(new long[]{detailedInfo.getAnswerMsgId()}), false, RESEND_TIMEOUT);
                 } else {
                     this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
                     this.scheduler.forgetMessageByMsgId(detailedInfo.getMsgId());
                 }
             }
-        } else if (object instanceof MTNewMessageDetailedInfo) {
-            MTNewMessageDetailedInfo detailedInfo = (MTNewMessageDetailedInfo) object;
+        } else if (object instanceof MTMsgNewDetailedInfo) {
+            MTMsgNewDetailedInfo detailedInfo = (MTMsgNewDetailedInfo) object;
             Logger.d(this.logtag, "msg_new_detailed_info: " + detailedInfo.getAnswerMsgId());
             if (this.receivedMessages.contains(detailedInfo.getAnswerMsgId())) {
                 this.scheduler.confirmMessage(detailedInfo.getAnswerMsgId());
             } else {
-                this.scheduler.postMessage(new MTNeedResendMessage(new long[]{detailedInfo.getAnswerMsgId()}), false, RESEND_TIMEOUT);
+                this.scheduler.postMessage(new MTMsgResendReq(new long[]{detailedInfo.getAnswerMsgId()}), false, RESEND_TIMEOUT);
             }
         } else if (object instanceof MTNewSessionCreated) {
             MTNewSessionCreated newSessionCreated = (MTNewSessionCreated) object;
@@ -496,8 +490,8 @@ public class MTProto {
 
     private void internalSchedule() {
         long time = System.nanoTime() / 1000000;
-        if (time - this.lastPingTime > PING_INTERVAL_REQUEST) {
-            this.lastPingTime = time;
+        if (time - this.lastPingTime.get() > PING_INTERVAL_REQUEST) {
+            this.lastPingTime.set(time);
             synchronized (this.contexts) {
                 this.contexts.forEach((context) -> {
                     this.scheduler.postMessageDelayed(new MTPingDelayDisconnect(Entropy.getInstance().generateRandomId(), PING_INTERVAL_SECONDS), false, PING_INTERVAL_REQUEST, 0, context.getContextId(), false);
@@ -558,9 +552,8 @@ public class MTProto {
             crypt.update(data, 0, datalen);
             return crypt.digest();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Logger.e(this.logtag, e);
         }
-
         return null;
     }
 
@@ -854,7 +847,7 @@ public class MTProto {
                 }
                 if (!MTProto.this.connectedContexts.contains(context.getContextId())) {
                     MTProto.this.connectedContexts.add(context.getContextId());
-                    MTProto.this.exponentalBackoff.onSuccess();
+                    MTProto.this.exponentialBackoff.onSuccess();
                     MTProto.this.connectionRate.onConnectionSuccess(MTProto.this.contextConnectionId.get(context.getContextId()));
                 }
 
@@ -905,7 +898,7 @@ public class MTProto {
                 synchronized (MTProto.this.contexts) {
                     context.suspendConnection(true);
                     if (!MTProto.this.connectedContexts.contains(context.getContextId())) {
-                        MTProto.this.exponentalBackoff.onFailureNoWait();
+                        MTProto.this.exponentialBackoff.onFailureNoWait();
                         MTProto.this.connectionRate.onConnectionFailure(MTProto.this.contextConnectionId.get(context.getContextId()));
                     }
                     MTProto.this.contexts.remove(context);
@@ -943,7 +936,7 @@ public class MTProto {
                 MTProto.this.contexts.remove(context);
                 if (!MTProto.this.connectedContexts.contains(contextId)) {
                     if (MTProto.this.contextConnectionId.containsKey(contextId)) {
-                        MTProto.this.exponentalBackoff.onFailureNoWait();
+                        MTProto.this.exponentialBackoff.onFailureNoWait();
                         MTProto.this.connectionRate.onConnectionFailure(MTProto.this.contextConnectionId.get(contextId));
                     }
                 }

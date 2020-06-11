@@ -1,15 +1,13 @@
 package org.javagram.mtproto.transport;
 
-/**
- * Created by Ruben Bermudez on 26.11.13.
- */
 public class ConnectionType {
+
     public static final int TYPE_TCP = 0;
 
-    private int id;
-    private String host;
-    private int port;
-    private int connectionType;
+    private final int id;
+    private final String host;
+    private final int port;
+    private final int connectionType;
 
     public ConnectionType(int id, String host, int port, int connectionType) {
         this.id = id;
@@ -33,4 +31,5 @@ public class ConnectionType {
     public int getConnectionType() {
         return this.connectionType;
     }
+
 }

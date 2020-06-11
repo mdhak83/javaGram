@@ -16,24 +16,29 @@ import static org.javagram.utils.StreamingUtils.writeLong;
  * Created with IntelliJ IDEA.
  * User: Ruben Bermudez
  * Date: 07.11.13
- * Time: 8:37
+ * Time: 8:40
  */
-public class MTNewMessageDetailedInfo extends TLObject {
+public class MTMsgDetailedInfo extends TLObject {
+    public static final int CLASS_ID = 0x276d3ec6;
 
-    public static final int CLASS_ID = 0x809db6df;
-
+    private long msgId;
     private long answerMsgId;
     private int bytes;
-    private int status;
+    private int state;
 
-    public MTNewMessageDetailedInfo(long answerMsgId, int bytes, int status) {
+    public MTMsgDetailedInfo(long msgId, long answerMsgId, int bytes, int state) {
+        this.msgId = msgId;
         this.answerMsgId = answerMsgId;
         this.bytes = bytes;
-        this.status = status;
+        this.state = state;
     }
 
-    public MTNewMessageDetailedInfo() {
+    public MTMsgDetailedInfo() {
 
+    }
+
+    public long getMsgId() {
+        return this.msgId;
     }
 
     public long getAnswerMsgId() {
@@ -44,8 +49,8 @@ public class MTNewMessageDetailedInfo extends TLObject {
         return this.bytes;
     }
 
-    public int getStatus() {
-        return this.status;
+    public int getState() {
+        return this.state;
     }
 
     @Override
@@ -55,20 +60,22 @@ public class MTNewMessageDetailedInfo extends TLObject {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
+        writeLong(this.msgId, stream);
         writeLong(this.answerMsgId, stream);
         writeInt(this.bytes, stream);
-        writeInt(this.status, stream);
+        writeInt(this.state, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
+        this.msgId = readLong(stream);
         this.answerMsgId = readLong(stream);
         this.bytes = readInt(stream);
-        this.status = readInt(stream);
+        this.state = readInt(stream);
     }
 
     @Override
     public String toString() {
-        return "msg_new_detailed_info#809db6df";
+        return "msg_detailed_info#276d3ec6";
     }
 }

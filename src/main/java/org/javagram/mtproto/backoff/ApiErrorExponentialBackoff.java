@@ -67,6 +67,7 @@ package org.javagram.mtproto.backoff;
  * @author Ravi Mistry
  */
 public class ApiErrorExponentialBackoff {
+
     /** The default initial interval value in milliseconds (0.5 seconds). */
     public static final int DEFAULT_INITIAL_INTERVAL_MILLIS = 100;
 

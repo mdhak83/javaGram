@@ -16,29 +16,24 @@ import static org.javagram.utils.StreamingUtils.writeLong;
  * Created with IntelliJ IDEA.
  * User: Ruben Bermudez
  * Date: 07.11.13
- * Time: 8:40
+ * Time: 8:37
  */
-public class MTMessageDetailedInfo extends TLObject {
-    public static final int CLASS_ID = 0x276d3ec6;
+public class MTMsgNewDetailedInfo extends TLObject {
 
-    private long msgId;
+    public static final int CLASS_ID = 0x809db6df;
+
     private long answerMsgId;
     private int bytes;
-    private int state;
+    private int status;
 
-    public MTMessageDetailedInfo(long msgId, long answerMsgId, int bytes, int state) {
-        this.msgId = msgId;
+    public MTMsgNewDetailedInfo(long answerMsgId, int bytes, int status) {
         this.answerMsgId = answerMsgId;
         this.bytes = bytes;
-        this.state = state;
+        this.status = status;
     }
 
-    public MTMessageDetailedInfo() {
+    public MTMsgNewDetailedInfo() {
 
-    }
-
-    public long getMsgId() {
-        return this.msgId;
     }
 
     public long getAnswerMsgId() {
@@ -49,8 +44,8 @@ public class MTMessageDetailedInfo extends TLObject {
         return this.bytes;
     }
 
-    public int getState() {
-        return this.state;
+    public int getStatus() {
+        return this.status;
     }
 
     @Override
@@ -60,22 +55,20 @@ public class MTMessageDetailedInfo extends TLObject {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        writeLong(this.msgId, stream);
         writeLong(this.answerMsgId, stream);
         writeInt(this.bytes, stream);
-        writeInt(this.state, stream);
+        writeInt(this.status, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.msgId = readLong(stream);
         this.answerMsgId = readLong(stream);
         this.bytes = readInt(stream);
-        this.state = readInt(stream);
+        this.status = readInt(stream);
     }
 
     @Override
     public String toString() {
-        return "msg_detailed_info#276d3ec6";
+        return "msg_new_detailed_info#809db6df";
     }
 }

@@ -14,16 +14,16 @@ import java.io.OutputStream;
  * @brief Informational Message regarding Status of Messages
  * @date 20/02/15
  */
-public class MTMessagesStateInfo extends TLObject {
+public class MTMsgsStateInfo extends TLObject {
     public static final int CLASS_ID = 0x04deb57d;
 
     private Long req_msg_id;
     private String info;
 
-    public MTMessagesStateInfo() {
+    public MTMsgsStateInfo() {
     }
 
-    public MTMessagesStateInfo(Long reqMsgId, String info) {
+    public MTMsgsStateInfo(Long reqMsgId, String info) {
         this.req_msg_id = reqMsgId;
         this.info = info;
     }

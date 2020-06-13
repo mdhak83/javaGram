@@ -32,7 +32,7 @@ public class PyroSelector {
     }
 
     public ByteBuffer malloc(int size) {
-        return ByteBuffer.allocate(size);
+        return ByteBuffer.allocateDirect(size);
     }
 
     public final boolean isNetworkThread() {

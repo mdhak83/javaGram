@@ -7,6 +7,7 @@ public class TLInitContext extends TLContext {
     @Override
     protected void registerClasses() {
         registerClass(ReqPQ.CLASS_ID, ReqPQ.class);
+        registerClass(ReqPQMulti.CLASS_ID, ReqPQMulti.class);
         registerClass(ResPQ.CLASS_ID, ResPQ.class);
         registerClass(ReqDhParams.CLASS_ID, ReqDhParams.class);
         registerClass(ServerDhOk.CLASS_ID, ServerDhOk.class);

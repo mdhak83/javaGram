@@ -2,16 +2,11 @@ package org.javagram.mtproto.pq;
 
 import java.net.Socket;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 8:14
- */
 public class PqAuth {
-    private byte[] authKey;
-    private long serverSalt;
-    private Socket socket;
+
+    private final byte[] authKey;
+    private final long serverSalt;
+    private final Socket socket;
 
     public PqAuth(byte[] authKey, long serverSalt, Socket socket) {
         this.authKey = authKey;
@@ -30,4 +25,5 @@ public class PqAuth {
     public Socket getSocket() {
         return this.socket;
     }
+
 }

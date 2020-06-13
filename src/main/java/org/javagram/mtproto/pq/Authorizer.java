@@ -14,7 +14,7 @@ import org.javagram.mtproto.tl.pq.DhGenFailure;
 import org.javagram.mtproto.tl.pq.DhGenOk;
 import org.javagram.mtproto.tl.pq.DhGenResult;
 import org.javagram.mtproto.tl.pq.DhGenRetry;
-import org.javagram.mtproto.tl.pq.PQInner;
+import org.javagram.mtproto.tl.pq.PQInnerData;
 import org.javagram.mtproto.tl.pq.ReqDhParams;
 import org.javagram.mtproto.tl.pq.ReqPQ;
 import org.javagram.mtproto.tl.pq.ReqSetDhClientParams;
@@ -24,7 +24,7 @@ import org.javagram.mtproto.tl.pq.ServerDhInner;
 import org.javagram.mtproto.tl.pq.ServerDhOk;
 import org.javagram.mtproto.tl.pq.ServerDhParams;
 import org.javagram.mtproto.tl.pq.TLInitContext;
-import org.javagram.mtproto.transport.ConnectionType;
+import org.javagram.mtproto.transport.ConnectionDescriptor;
 import org.javagram.mtproto.transport.PlainTcpConnection;
 import org.javagram.mtproto.transport.TransportRate;
 import org.javagram.api._primitives.TLMethod;
@@ -130,7 +130,7 @@ public class Authorizer {
 
         byte[] newNonce = Entropy.getInstance().generateSeed(32);
 
-        PQInner inner = new PQInner(resPQ.getPq(), fromBigInt(p), fromBigInt(q), nonce, serverNonce, newNonce);
+        PQInnerData inner = new PQInnerData(resPQ.getPq(), fromBigInt(p), fromBigInt(q), nonce, serverNonce, newNonce);
 
         byte[] pqInner = inner.serialize();
 
@@ -220,7 +220,7 @@ public class Authorizer {
     public PqAuth doAuth(ConnectionInfo[] infos) {
         TransportRate rate = new TransportRate(infos);
         for (int i = 0; i < AUTH_ATTEMPT_COUNT; i++) {
-            ConnectionType connectionType = rate.tryConnection();
+            ConnectionDescriptor connectionType = rate.tryConnection();
             try {
                 this.context = new PlainTcpConnection(connectionType.getHost(), connectionType.getPort());
                 rate.onConnectionSuccess(connectionType.getId());

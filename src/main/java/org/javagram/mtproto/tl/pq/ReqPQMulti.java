@@ -9,15 +9,15 @@ import java.io.OutputStream;
 import org.javagram.utils.DeserializeException;
 import org.javagram.utils.StreamingUtils;
 
-public class ReqPQ extends TLMethod<ResPQ> {
+public class ReqPQMulti extends TLMethod<ResPQ> {
 
-    public static final int CLASS_ID = 0x60469778;
+    public static final int CLASS_ID = 0xbe7e8ef1;
 
     protected byte[] nonce;
 
-    public ReqPQ() { }
+    public ReqPQMulti() { }
 
-    public ReqPQ(byte[] nonce) {
+    public ReqPQMulti(byte[] nonce) {
         if (nonce == null || nonce.length != 16) {
             throw new IllegalArgumentException("nonce might be not null and 16 bytes length");
         }
@@ -55,7 +55,7 @@ public class ReqPQ extends TLMethod<ResPQ> {
         TLObject response = context.deserializeMessage(stream);
         if (response == null) {
             throw new DeserializeException("Unable to deserialize response");
-        } else if (!(response instanceof ResPQ)) {
+        } else  if (!(response instanceof ResPQ)) {
             throw new DeserializeException("Response has incorrect type");
         } else {
             return (ResPQ) response;
@@ -64,7 +64,7 @@ public class ReqPQ extends TLMethod<ResPQ> {
 
     @Override
     public String toString() {
-        return "req_pq#60469778";
+        return "req_pq_multi#be7e8ef1";
     }
 
 }

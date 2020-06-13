@@ -4,106 +4,87 @@
  * You should have received a copy of the license in this archive (see LICENSE).
  *
  * Copyright Nikolai Kudashov, 2013-2014.
+ * Update 14/MAY/2019
+ * https://github.com/DrKLO/Telegram/blob/master/TMessagesProj/jni/tgnet/BuffersStorage.cpp
  */
 
 package org.javagram.mtproto.transport;
 
 import org.javagram.mtproto.log.Logger;
-
 import java.util.ArrayList;
+import java.util.List;
 
 public class BuffersStorage {
 
-    private final ArrayList<ByteBufferDesc> freeBuffers128;
-    private final ArrayList<ByteBufferDesc> freeBuffers1024;
-    private final ArrayList<ByteBufferDesc> freeBuffers4096;
-    private final ArrayList<ByteBufferDesc> freeBuffers16384;
-    private final ArrayList<ByteBufferDesc> freeBuffers32768;
-    private final ArrayList<ByteBufferDesc> freeBuffersBig;
-    private final boolean isThreadSafe;
-    private final static Object LOCK = new Object();
+    private final static int BUFFER_SIZE_008B = 8;
+    private final static int BUFFER_SIZE_128B = 128;
+    private final static int BUFFER_SIZE_001K = 1024;
+    private final static int BUFFER_SIZE_004K = 4096;
+    private final static int BUFFER_SIZE_016K = 16384;
+    private final static int BUFFER_SIZE_040K = 40000;
+    private final static int BUFFER_SIZE_160K = 160000;
+    
+    private final List<ByteBufferDesc> freeBuffers8 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffers128 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffers1024 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffers4096 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffers16384 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffers32768 = new ArrayList<>();
+    private final List<ByteBufferDesc> freeBuffersBig = new ArrayList<>();
 
-    private static volatile BuffersStorage Instance = null;
+    private static BuffersStorage Instance = null;
     
     public static BuffersStorage getInstance() {
-        BuffersStorage localInstance = Instance;
-        if (localInstance == null) {
-            synchronized(LOCK) {
-                localInstance = Instance;
-                if (localInstance == null) {
-                    Instance = localInstance = new BuffersStorage(true);
-                }
+        BuffersStorage ret;
+        synchronized(BuffersStorage.class) {
+            if (Instance == null) {
+                Instance = new BuffersStorage();
             }
+            ret = Instance;
         }
-        return localInstance;
+        return ret;
     }
 
-    public BuffersStorage(boolean threadSafe) {
-        this.isThreadSafe = threadSafe;
-        this.freeBuffers128 = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            this.freeBuffers128.add(new ByteBufferDesc(328));
+    private BuffersStorage() {
+        for (int i = 0; i < 4; i++) {
+            this.freeBuffers8.add(new ByteBufferDesc(BUFFER_SIZE_008B));
         }
-        this.freeBuffers1024 = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            this.freeBuffers1024.add(new ByteBufferDesc(1224));
-        }
-        this.freeBuffers4096 = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            this.freeBuffers4096.add(new ByteBufferDesc(4296));
-        }
-        this.freeBuffers16384 = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            this.freeBuffers16384.add(new ByteBufferDesc(16584));
-        }
-        this.freeBuffers32768 = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            this.freeBuffers32768.add(new ByteBufferDesc(32968));
-        }
-        this.freeBuffersBig = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            this.freeBuffersBig.add(new ByteBufferDesc(262344));
+            this.freeBuffers1024.add(new ByteBufferDesc(BUFFER_SIZE_001K));
         }
     }
 
     public ByteBufferDesc getFreeBuffer(int size) {
-        if (size <= 0) {
-            return null;
-        }
         int byteCount = 0;
-        ArrayList<ByteBufferDesc> arrayToGetFrom = null;
+        List<ByteBufferDesc> arrayToGetFrom = null;
         ByteBufferDesc buffer = null;
-        if (size <= 128) {
+        if (size <= BUFFER_SIZE_008B) {
+            arrayToGetFrom = this.freeBuffers8;
+            byteCount = BUFFER_SIZE_008B;
+        } else if (size <= BUFFER_SIZE_128B) {
             arrayToGetFrom = this.freeBuffers128;
-            byteCount = 128;
-        } else if (size <= 1024 + 200) {
+            byteCount = BUFFER_SIZE_128B;
+        } else if (size <= BUFFER_SIZE_001K + 200) {
             arrayToGetFrom = this.freeBuffers1024;
-            byteCount = 1224 + 200;
-        } else if (size <= 4096 + 200) {
+            byteCount = BUFFER_SIZE_001K + 200;
+        } else if (size <= BUFFER_SIZE_004K + 200) {
             arrayToGetFrom = this.freeBuffers4096;
-            byteCount = 4296 + 200;
-        } else if (size <= 16384 + 200) {
+            byteCount = BUFFER_SIZE_004K + 200;
+        } else if (size <= BUFFER_SIZE_016K + 200) {
             arrayToGetFrom = this.freeBuffers16384;
-            byteCount = 16584 + 200;
-        } else if (size <= 32768 + 200) {
+            byteCount = BUFFER_SIZE_016K + 200;
+        } else if (size <= BUFFER_SIZE_040K) {
             arrayToGetFrom = this.freeBuffers32768;
-            byteCount = 32968;
-        } else if (size <= 262144 + 200) {
+            byteCount = BUFFER_SIZE_040K;
+        } else if (size <= BUFFER_SIZE_160K) {
             arrayToGetFrom = this.freeBuffersBig;
-            byteCount = 262344;
+            byteCount = BUFFER_SIZE_160K;
         } else {
             buffer = new ByteBufferDesc(size);
         }
 
         if (arrayToGetFrom != null) {
-            if (this.isThreadSafe) {
-                synchronized (LOCK) {
-                    if (arrayToGetFrom.size() > 0) {
-                        buffer = arrayToGetFrom.get(0);
-                        arrayToGetFrom.remove(0);
-                    }
-                }
-            } else {
+            synchronized(arrayToGetFrom) {
                 if (arrayToGetFrom.size() > 0) {
                     buffer = arrayToGetFrom.get(0);
                     arrayToGetFrom.remove(0);
@@ -112,11 +93,13 @@ public class BuffersStorage {
 
             if (buffer == null) {
                 buffer = new ByteBufferDesc(byteCount);
-                Logger.d("tmessages", "create new " + byteCount + " buffer");
+                Logger.d("[BuffersStorage]", "Creating new " + byteCount + " buffer");
             }
         }
 
-        buffer.buffer.limit(size).rewind();
+        if (buffer != null) {
+            buffer.buffer.limit(size).rewind();
+        }
         return buffer;
     }
 
@@ -124,43 +107,42 @@ public class BuffersStorage {
         if (buffer == null) {
             return;
         }
+        int capacity = buffer.buffer.capacity();
         int maxCount = 10;
-        ArrayList<ByteBufferDesc> arrayToReuse = null;
-        switch (buffer.buffer.capacity()) {
-            case 128:
-                arrayToReuse = this.freeBuffers128;
+        List<ByteBufferDesc> arrayToReuse = null;
+        switch (capacity) {
+            case BUFFER_SIZE_008B:
+                arrayToReuse = this.freeBuffers8;
+                maxCount = 80;
                 break;
-            case 1024 + 200:
+            case BUFFER_SIZE_128B:
+                arrayToReuse = this.freeBuffers128;
+                maxCount = 80;
+                break;
+            case BUFFER_SIZE_001K + 200:
                 arrayToReuse = this.freeBuffers1024;
                 break;
-            case 4096 + 200:
+            case BUFFER_SIZE_004K + 200:
                 arrayToReuse = this.freeBuffers4096;
                 break;
-            case 16384 + 200:
+            case BUFFER_SIZE_016K + 200:
                 arrayToReuse = this.freeBuffers16384;
                 break;
-            case 32768 + 200:
+            case BUFFER_SIZE_040K:
                 arrayToReuse = this.freeBuffers32768;
                 break;
-            case 262144 + 200:
+            case BUFFER_SIZE_160K:
                 arrayToReuse = this.freeBuffersBig;
-                maxCount = 10;
                 break;
             default:
                 break;
         }
         if (arrayToReuse != null) {
-            if (this.isThreadSafe) {
-                synchronized (LOCK) {
-                    if (arrayToReuse.size() < maxCount) {
-                        arrayToReuse.add(buffer);
-                    } else {
-                        Logger.w("tmessages", "too more");
-                    }
-                }
-            } else {
+            synchronized(arrayToReuse) {
                 if (arrayToReuse.size() < maxCount) {
                     arrayToReuse.add(buffer);
+                } else {
+                    Logger.w("[BuffersStorage]", "Too many " + buffer.capacity() + " buffers.");
                 }
             }
         }

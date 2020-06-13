@@ -1035,12 +1035,14 @@ public class TelegramApi {
                         if (authKey == null) {
                             throw new TimeoutException();
                         }
-                        proto = new MTProto(TelegramApi.this.config.getApiState().getMtProtoState(dcId), TelegramApi.this.callback, new CallWrapper() {
-                                @Override
-                                public TLObject wrapObject(TLMethod srcRequest) {
-                                    return wrapForDc(dcId, srcRequest);
-                                }
-                        }, CHANNELS_FS, TelegramApi.this.config);
+                        proto = new MTProto(
+                                TelegramApi.this.config.getApiState().getMtProtoState(dcId), 
+                                TelegramApi.this.callback,
+                                (TLMethod srcRequest) -> wrapForDc(dcId, srcRequest),
+                                CHANNELS_FS,
+                                TelegramApi.this.config
+                        );
+                        proto.startThreads();
 
                         TelegramApi.this.dcProtos.put(dcId, proto);
                         return proto;
@@ -1062,13 +1064,14 @@ public class TelegramApi {
                             throw new TimeoutException();
                         }
 
-                        proto = new MTProto(TelegramApi.this.config.getApiState().getMtProtoState(dcId), TelegramApi.this.callback,
-                                new CallWrapper() {
-                                    @Override
-                                    public TLObject wrapObject(TLMethod srcRequest) {
-                                        return wrapForDc(dcId, srcRequest);
-                                    }
-                                }, CHANNELS_FS, TelegramApi.this.config);
+                        proto = new MTProto(
+                                TelegramApi.this.config.getApiState().getMtProtoState(dcId),
+                                TelegramApi.this.callback, 
+                                (TLMethod srcRequest) -> wrapForDc(dcId, srcRequest), 
+                                CHANNELS_FS, 
+                                TelegramApi.this.config
+                        );
+                        proto.startThreads();
 
                         TelegramApi.this.dcProtos.put(dcId, proto);
 
@@ -1117,13 +1120,14 @@ public class TelegramApi {
                         try {
                             long start = System.currentTimeMillis();
                             waitForDc(TelegramApi.this.primaryDc);
-                            TelegramApi.this.mainProto = new MTProto(TelegramApi.this.config.getApiState().getMtProtoState(TelegramApi.this.primaryDc), TelegramApi.this.callback,
-                                    new CallWrapper() {
-                                        @Override
-                                        public TLObject wrapObject(TLMethod srcRequest) {
-                                            return wrapForDc(TelegramApi.this.primaryDc, srcRequest);
-                                        }
-                                    }, CHANNELS_MAIN, TelegramApi.this.config);
+                            TelegramApi.this.mainProto = new MTProto(
+                                    TelegramApi.this.config.getApiState().getMtProtoState(TelegramApi.this.primaryDc),
+                                    TelegramApi.this.callback,
+                                    (TLMethod srcRequest) -> wrapForDc(TelegramApi.this.primaryDc, srcRequest), 
+                                    CHANNELS_MAIN, 
+                                    TelegramApi.this.config
+                            );
+                            TelegramApi.this.mainProto.startThreads();
                             Logger.d(TelegramApi.this.logtag, "#MTProto #" + TelegramApi.this.mainProto.getInstanceIndex() + " created in " + (System.currentTimeMillis() - start) + " ms");
                         } catch (IOException | java.util.concurrent.TimeoutException e) {
                             Logger.e(TelegramApi.this.logtag, e);
@@ -1137,13 +1141,14 @@ public class TelegramApi {
                         }
                     } else {
                         long start = System.currentTimeMillis();
-                        TelegramApi.this.mainProto = new MTProto(TelegramApi.this.config.getApiState().getMtProtoState(TelegramApi.this.primaryDc), TelegramApi.this.callback,
-                                new CallWrapper() {
-                                    @Override
-                                    public TLObject wrapObject(TLMethod srcRequest) {
-                                        return wrapForDc(TelegramApi.this.primaryDc, srcRequest);
-                                    }
-                                }, CHANNELS_MAIN, TelegramApi.this.config);
+                        TelegramApi.this.mainProto = new MTProto(
+                                TelegramApi.this.config.getApiState().getMtProtoState(TelegramApi.this.primaryDc),
+                                TelegramApi.this.callback,
+                                (TLMethod srcRequest) -> wrapForDc(TelegramApi.this.primaryDc, srcRequest), 
+                                CHANNELS_MAIN, 
+                                TelegramApi.this.config
+                        );
+                        TelegramApi.this.mainProto.startThreads();
                         Logger.d(TelegramApi.this.logtag, "#MTProto #" + TelegramApi.this.mainProto.getInstanceIndex() + " created in " + (System.currentTimeMillis() - start) + " ms");
                     }
                     synchronized (TelegramApi.this.callbacks) {

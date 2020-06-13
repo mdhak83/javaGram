@@ -15,21 +15,30 @@ import java.nio.ByteOrder;
 public class ByteBufferDesc {
     
     public ByteBuffer buffer;
-    private boolean justCalc;
-    private int len;
+    private boolean calculateSizeOnly = false;
+    private int _capacity;
+    private boolean sliced = false;
+    private boolean bufferOwner = true;
 
     public ByteBufferDesc(int size) {
-        this.buffer = ByteBuffer.allocateDirect(size);
+        this.buffer = ByteBuffer.allocate(size);
         this.buffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     public ByteBufferDesc(boolean calculate) {
-        this.justCalc = calculate;
+        this.calculateSizeOnly = calculate;
     }
 
     public ByteBufferDesc(byte[] bytes) {
         this.buffer = ByteBuffer.wrap(bytes);
+        this.sliced = true;
         this.buffer.order(ByteOrder.LITTLE_ENDIAN);
+    }
+    
+    public void reuse() {
+        if (!this.sliced) {
+            BuffersStorage.getInstance().reuseFreeBuffer(this);
+        }
     }
 
     public int position() {
@@ -68,10 +77,14 @@ public class ByteBufferDesc {
         return this.buffer.hasRemaining();
     }
 
+    public int remaining() {
+        return this.buffer.remaining();
+    }
+
     public void writeInt32(int x) {
         try {
-            if (this.justCalc) {
-                this.len += 4;
+            if (this.calculateSizeOnly) {
+                this._capacity += 4;
             } else {
                 this.buffer.putInt(x);
             }
@@ -82,8 +95,8 @@ public class ByteBufferDesc {
 
     public void writeInt64(long x) {
         try {
-            if (this.justCalc) {
-                this.len += 8;
+            if (this.calculateSizeOnly) {
+                this._capacity += 8;
             } else {
                 this.buffer.putLong(x);
             }
@@ -93,8 +106,8 @@ public class ByteBufferDesc {
     }
 
     public void writeBool(boolean value) {
-        if (this.justCalc) {
-            this.len += 4;
+        if (this.calculateSizeOnly) {
+            this._capacity += 4;
         } else {
             if (value) {
                 writeInt32(0x997275b5);
@@ -106,8 +119,8 @@ public class ByteBufferDesc {
 
     public void writeRaw(byte[] b) {
         try {
-            if (this.justCalc) {
-                this.len += b.length;
+            if (this.calculateSizeOnly) {
+                this._capacity += b.length;
             } else {
                 this.buffer.put(b);
             }
@@ -118,8 +131,8 @@ public class ByteBufferDesc {
 
     public void writeRaw(byte[] b, int offset, int count) {
         try {
-            if (this.justCalc) {
-                this.len += count;
+            if (this.calculateSizeOnly) {
+                this._capacity += count;
             } else {
                 this.buffer.put(b, offset, count);
             }
@@ -134,8 +147,8 @@ public class ByteBufferDesc {
 
     public void writeByte(byte b) {
         try {
-            if (this.justCalc) {
-                this.len += 1;
+            if (this.calculateSizeOnly) {
+                this._capacity += 1;
             } else {
                 this.buffer.put(b);
             }
@@ -155,14 +168,14 @@ public class ByteBufferDesc {
     public void writeByteArray(byte[] b, int offset, int count) {
         try {
             if(count <= 253) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) count);
                 }
             } else {
-                if (this.justCalc) {
-                    this.len += 4;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 4;
                 } else {
                     this.buffer.put((byte) 254);
                     this.buffer.put((byte) count);
@@ -170,15 +183,15 @@ public class ByteBufferDesc {
                     this.buffer.put((byte) (count >> 16));
                 }
             }
-            if (this.justCalc) {
-                this.len += count;
+            if (this.calculateSizeOnly) {
+                this._capacity += count;
             } else {
                 this.buffer.put(b, offset, count);
             }
             int i = (count <= 253) ? 1 : 4;
             while (((count + i) % 4) != 0) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) 0);
                 }
@@ -192,14 +205,14 @@ public class ByteBufferDesc {
     public void writeByteArray(byte[] b) {
         try {
             if (b.length <= 253) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) b.length);
                 }
             } else {
-                if (this.justCalc) {
-                    this.len += 4;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 4;
                 } else {
                     this.buffer.put((byte) 254);
                     this.buffer.put((byte) b.length);
@@ -207,15 +220,15 @@ public class ByteBufferDesc {
                     this.buffer.put((byte) (b.length >> 16));
                 }
             }
-            if (!this.justCalc) {
+            if (!this.calculateSizeOnly) {
                 this.buffer.put(b);
             } else {
-                this.len += b.length;
+                this._capacity += b.length;
             }
             int i = (b.length <= 253) ? 1 : 4;
             while(((b.length + i) % 4) != 0) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) 0);
                 }
@@ -238,14 +251,14 @@ public class ByteBufferDesc {
         try {
             final int l = b.limit();
             if (l <= 253) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) l);
                 }
             } else {
-                if (this.justCalc) {
-                    this.len += 4;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 4;
                 } else {
                     this.buffer.put((byte) 254);
                     this.buffer.put((byte) l);
@@ -253,16 +266,16 @@ public class ByteBufferDesc {
                     this.buffer.put((byte) (l >> 16));
                 }
             }
-            if (this.justCalc) {
-                this.len += l;
+            if (this.calculateSizeOnly) {
+                this._capacity += l;
             } else {
                 b.rewind();
                 this.buffer.put(b.buffer);
             }
             int i = (l <= 253) ? 1 : 4;
             while(((l + i) % 4) != 0) {
-                if (this.justCalc) {
-                    this.len += 1;
+                if (this.calculateSizeOnly) {
+                    this._capacity += 1;
                 } else {
                     this.buffer.put((byte) 0);
                 }
@@ -274,8 +287,8 @@ public class ByteBufferDesc {
     }
 
     public void writeRaw(ByteBufferDesc b) {
-        if (this.justCalc) {
-            this.len += b.limit();
+        if (this.calculateSizeOnly) {
+            this._capacity += b.limit();
         } else {
             b.rewind();
             this.buffer.put(b.buffer);
@@ -287,16 +300,16 @@ public class ByteBufferDesc {
     }
 
     public int length() {
-        if (!this.justCalc) {
+        if (!this.calculateSizeOnly) {
             return this.buffer.position();
         }
-        return this.len;
+        return this._capacity;
     }
 
     public void skip(int count) {
         if (count != 0) {
-            if (this.justCalc) {
-                this.len += count;
+            if (this.calculateSizeOnly) {
+                this._capacity += count;
             } else {
                 this.buffer.position(this.buffer.position() + count);
             }

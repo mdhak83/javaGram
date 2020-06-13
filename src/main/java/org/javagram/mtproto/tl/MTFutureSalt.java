@@ -2,22 +2,11 @@ package org.javagram.mtproto.tl;
 
 import org.javagram.api._primitives.TLContext;
 import org.javagram.api._primitives.TLObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.javagram.utils.StreamingUtils;
 
-import static org.javagram.utils.StreamingUtils.readInt;
-import static org.javagram.utils.StreamingUtils.readLong;
-import static org.javagram.utils.StreamingUtils.writeInt;
-import static org.javagram.utils.StreamingUtils.writeLong;
-
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 07.11.13
- * Time: 8:00
- */
 public class MTFutureSalt extends TLObject {
 
     public static final int CLASS_ID = 0x0949d9dc;
@@ -55,16 +44,16 @@ public class MTFutureSalt extends TLObject {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        writeInt(this.validSince, stream);
-        writeInt(this.validUntil, stream);
-        writeLong(this.salt, stream);
+        StreamingUtils.writeInt(this.validSince, stream);
+        StreamingUtils.writeInt(this.validUntil, stream);
+        StreamingUtils.writeLong(this.salt, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.validSince = readInt(stream);
-        this.validUntil = readInt(stream);
-        this.salt = readLong(stream);
+        this.validSince = StreamingUtils.readInt(stream);
+        this.validUntil = StreamingUtils.readInt(stream);
+        this.salt = StreamingUtils.readLong(stream);
     }
 
     @Override

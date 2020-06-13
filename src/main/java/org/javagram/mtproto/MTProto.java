@@ -10,7 +10,7 @@ import org.javagram.mtproto.secure.Entropy;
 import org.javagram.mtproto.state.AbsMTProtoState;
 import org.javagram.mtproto.state.KnownSalt;
 import org.javagram.mtproto.time.TimeOverlord;
-import org.javagram.mtproto.transport.ConnectionType;
+import org.javagram.mtproto.transport.ConnectionDescriptor;
 import org.javagram.mtproto.transport.TcpContext;
 import org.javagram.mtproto.transport.TcpContextCallback;
 import org.javagram.mtproto.transport.TransportRate;
@@ -26,6 +26,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,10 +64,10 @@ public class MTProto {
     private static final AtomicInteger RESPONSE_PROCESSOR_THREAD_INDEX = new AtomicInteger(0);
     private static final AtomicInteger CONNECTION_FIXER_THREAD_INDEX = new AtomicInteger(0);
 
-    private static final int MESSAGES_CACHE = 3000;
+    private static final int MESSAGES_CACHE = 10000;
     private static final int MESSAGES_CACHE_MIN = 20;
     private static final int MAX_INTERNAL_FLOOD_WAIT_SECONDS = 10;
-    private static final int PING_INTERVAL_REQUEST = 60000;
+    private static final int PING_INTERVAL_REQUEST_MILLISECONDS = 60000;
     private static final int PING_INTERVAL_SECONDS = 75;
 
     private static final int ERROR_MSG_ID_TOO_LOW = 16;
@@ -86,14 +90,14 @@ public class MTProto {
 
     private final String logtag;
     private final int instanceIndex;
-    private final HashSet<TcpContext> contexts = new HashSet<>();
-    private final HashMap<Integer, Integer> contextConnectionId = new HashMap<>();
-    private final HashSet<Integer> connectedContexts = new HashSet<>();
-    private final HashSet<Integer> initedContext = new HashSet<>();
+    private final Set<TcpContext> contexts = new HashSet<>();
+    private final Map<Integer, Integer> contextConnectionId = new HashMap<>();
+    private final Set<Integer> connectedContexts = new HashSet<>();
+    private final Set<Integer> initedContext = new HashSet<>();
     private final Scheduler scheduler;
     private final MyTLAppConfiguration config;
-    private final ConcurrentLinkedQueue<MTMessage> inQueue = new ConcurrentLinkedQueue<>();
-    private final ArrayList<Long> receivedMessages = new ArrayList<>();
+    private final Queue<MTMessage> inQueue = new ConcurrentLinkedQueue<>();
+    private final List<Long> receivedMessages = new ArrayList<>();
     private final MTProtoContext protoContext;
     private final int desiredConnectionCount;
     private final TcpContextCallback tcpListener;
@@ -109,7 +113,7 @@ public class MTProto {
     private long futureSaltsRequestedTime = 0L;
     private int roundRobin;
     private TransportRate connectionRate;
-    private final AtomicLong lastPingTime = new AtomicLong((System.nanoTime() / 1000000L) - (PING_INTERVAL_REQUEST * 10));
+    private final AtomicLong lastPingTime = new AtomicLong((System.nanoTime() / 1000000L) - (PING_INTERVAL_REQUEST_MILLISECONDS * 10));
     private final ExponentialBackoff exponentialBackoff;
     private final ApiErrorExponentialBackoff apiErrorExponentialBackoff;
     private final ConcurrentLinkedQueue<Long> newSessionsIds = new ConcurrentLinkedQueue<>();
@@ -132,10 +136,13 @@ public class MTProto {
         this.tcpListener = new TcpListener();
         this.scheduler = new Scheduler(this, callWrapper);
         this.schedulerThread = new SchedulerThread();
-        this.schedulerThread.start();
         this.responseProcessor = new ResponseProcessor();
-        this.responseProcessor.start();
         this.connectionFixerThread = new ConnectionFixerThread();
+    }
+    
+    public void startThreads() {
+        this.schedulerThread.start();
+        this.responseProcessor.start();
         this.connectionFixerThread.start();
     }
 
@@ -206,7 +213,7 @@ public class MTProto {
                 return false;
             }
             if (this.receivedMessages.size() > MESSAGES_CACHE_MIN) {
-                if (!this.receivedMessages.stream().anyMatch(x -> messageId > x)) {
+                if (!this.receivedMessages.stream().anyMatch(currentMessageId -> (messageId > currentMessageId))) {
                     return false;
                 }
             }
@@ -489,12 +496,12 @@ public class MTProto {
     }
 
     private void internalSchedule() {
-        long time = System.nanoTime() / 1000000;
-        if (time - this.lastPingTime.get() > PING_INTERVAL_REQUEST) {
+        long time = System.currentTimeMillis();
+        if (time - this.lastPingTime.get() > PING_INTERVAL_REQUEST_MILLISECONDS) {
             this.lastPingTime.set(time);
             synchronized (this.contexts) {
                 this.contexts.forEach((context) -> {
-                    this.scheduler.postMessageDelayed(new MTPingDelayDisconnect(Entropy.getInstance().generateRandomId(), PING_INTERVAL_SECONDS), false, PING_INTERVAL_REQUEST, 0, context.getContextId(), false);
+                    this.scheduler.postMessageDelayed(new MTPingDelayDisconnect(Entropy.getInstance().generateRandomId(), PING_INTERVAL_SECONDS), false, PING_INTERVAL_REQUEST_MILLISECONDS, 0, context.getContextId(), false);
                 });
             }
         }
@@ -654,7 +661,7 @@ public class MTProto {
             PrepareSchedule prepareSchedule = new PrepareSchedule();
             while (!MTProto.this.isClosed.get()) {
                 if (Logger.LOG_THREADS) {
-                    Logger.d(MTProto.this.logtag, "Scheduler Iteration");
+                    Logger.d(MTProto.this.logtag, this.getName() + " Iteration");
                 }
 
                 int[] contextIds;
@@ -670,7 +677,7 @@ public class MTProto {
                     MTProto.this.scheduler.prepareScheduler(prepareSchedule, contextIds);
                     if (prepareSchedule.isDoWait()) {
                         if (Logger.LOG_THREADS) {
-                            Logger.d(MTProto.this.logtag, "Scheduler:wait " + prepareSchedule.getDelay());
+                            Logger.d(MTProto.this.logtag, this.getName() + ":wait " + prepareSchedule.getDelay());
                         }
                         try {
                             MTProto.this.scheduler.wait(Math.min(prepareSchedule.getDelay(), 30000));
@@ -813,21 +820,23 @@ public class MTProto {
                     }
                 }
 
-                ConnectionType type = MTProto.this.connectionRate.tryConnection();
-                TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), MTProto.this.tcpListener);
-                context.connect();
-                MTProto.this.scheduler.postMessageDelayed(new MTPing(Entropy.getInstance().generateRandomId()), false, PING_TIMEOUT, 0, context.getContextId(), false);
-                synchronized (MTProto.this.contexts) {
-                    MTProto.this.contexts.add(context);
-                    MTProto.this.contextConnectionId.put(context.getContextId(), type.getId());
-                }
-                synchronized (MTProto.this.scheduler) {
-                    MTProto.this.scheduler.notifyAll();
+                ConnectionDescriptor type = MTProto.this.connectionRate.tryConnection();
+                if (MTProto.this.contexts.size() < MTProto.this.desiredConnectionCount) {
+                    TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), MTProto.this.tcpListener);
+                    context.connect();
+                    MTProto.this.scheduler.postMessageDelayed(new MTPing(Entropy.getInstance().generateRandomId()), false, PING_TIMEOUT, 0, context.getContextId(), false);
+                    synchronized (MTProto.this.contexts) {
+                        MTProto.this.contexts.add(context);
+                        MTProto.this.contextConnectionId.put(context.getContextId(), type.getId());
+                    }
+                    synchronized (MTProto.this.scheduler) {
+                        MTProto.this.scheduler.notifyAll();
+                    }
                 }
             }
             MTProto.this.contexts.forEach(context -> {
                 context.suspendConnection(true);
-                context.close();
+                //context.close();
             });
         }
     }
@@ -901,14 +910,14 @@ public class MTProto {
                         MTProto.this.exponentialBackoff.onFailureNoWait();
                         MTProto.this.connectionRate.onConnectionFailure(MTProto.this.contextConnectionId.get(context.getContextId()));
                     }
-                    MTProto.this.contexts.remove(context);
+                    //MTProto.this.contexts.remove(context);
                     // Informs ConnectionFixerThread
                     MTProto.this.contexts.notifyAll();
                     MTProto.this.scheduler.onConnectionDies(context.getContextId());
                     if (Logger.LOG_THREADS) {
                         Logger.d(MTProto.this.logtag, "Closing current TcpContext.");
                     }
-                    context.close();
+                    //context.close();
                 }
             }
         }
@@ -933,7 +942,7 @@ public class MTProto {
             int contextId = context.getContextId();
             Logger.d(MTProto.this.logtag, "onChannelBroken (#" + contextId + ")");
             synchronized (MTProto.this.contexts) {
-                MTProto.this.contexts.remove(context);
+                //MTProto.this.contexts.remove(context);
                 if (!MTProto.this.connectedContexts.contains(contextId)) {
                     if (MTProto.this.contextConnectionId.containsKey(contextId)) {
                         MTProto.this.exponentialBackoff.onFailureNoWait();
@@ -947,7 +956,7 @@ public class MTProto {
             if (Logger.LOG_THREADS) {
                 Logger.d(MTProto.this.logtag, "Closing current TcpContext.");
             }
-            context.close();
+            //context.close();
         }
 
         @Override

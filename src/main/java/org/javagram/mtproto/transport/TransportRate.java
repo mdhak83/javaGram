@@ -19,15 +19,15 @@ public class TransportRate {
         }
         for (ConnectionInfo connectionInfo : connectionInfos) {
             synchronized(this.transports) {
-                this.transports.put(connectionInfo.getId(), new Transport(new ConnectionType(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionType.TYPE_TCP), connectionInfo.getPriority() - min + 1));
+                this.transports.put(connectionInfo.getId(), new Transport(new ConnectionDescriptor(connectionInfo.getId(), connectionInfo.getAddress(), connectionInfo.getPort(), ConnectionDescriptor.TYPE_TCP), connectionInfo.getPriority() - min + 1));
             }
         }
         this.normalize();
     }
 
-    public ConnectionType tryConnection() {
+    public ConnectionDescriptor tryConnection() {
         Transport[] currentTransports;
-        ConnectionType type;
+        ConnectionDescriptor type;
         synchronized(this.transports) {
             currentTransports = this.transports.values().toArray(new Transport[0]);
             Arrays.sort(currentTransports, (Transport transport, Transport transport2) -> -Float.compare(transport.getRate(), transport2.getRate()));
@@ -67,19 +67,19 @@ public class TransportRate {
 
     private class Transport {
         
-        private ConnectionType connectionType;
+        private ConnectionDescriptor connectionType;
         private float rate;
 
-        private Transport(ConnectionType connectionType, float rate) {
+        private Transport(ConnectionDescriptor connectionType, float rate) {
             this.connectionType = connectionType;
             this.rate = rate;
         }
 
-        public ConnectionType getConnectionType() {
+        public ConnectionDescriptor getConnectionType() {
             return this.connectionType;
         }
 
-        public void setConnectionType(ConnectionType connectionType) {
+        public void setConnectionType(ConnectionDescriptor connectionType) {
             this.connectionType = connectionType;
         }
 

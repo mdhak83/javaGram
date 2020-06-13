@@ -1,6 +1,6 @@
 package org.javagram.mtproto.transport;
 
-public class ConnectionType {
+public class ConnectionDescriptor {
 
     public static final int TYPE_TCP = 0;
 
@@ -9,7 +9,7 @@ public class ConnectionType {
     private final int port;
     private final int connectionType;
 
-    public ConnectionType(int id, String host, int port, int connectionType) {
+    public ConnectionDescriptor(int id, String host, int port, int connectionType) {
         this.id = id;
         this.host = host;
         this.port = port;

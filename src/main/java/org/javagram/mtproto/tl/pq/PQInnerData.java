@@ -2,23 +2,13 @@ package org.javagram.mtproto.tl.pq;
 
 import org.javagram.api._primitives.TLContext;
 import org.javagram.api._primitives.TLObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.javagram.utils.StreamingUtils;
 
-import static org.javagram.utils.StreamingUtils.readBytes;
-import static org.javagram.utils.StreamingUtils.readTLBytes;
-import static org.javagram.utils.StreamingUtils.writeByteArray;
-import static org.javagram.utils.StreamingUtils.writeTLBytes;
+public class PQInnerData extends TLObject {
 
-/**
- * Created with IntelliJ IDEA.
- * User: Ruben Bermudez
- * Date: 03.11.13
- * Time: 6:20
- */
-public class PQInner extends TLObject {
     public static final int CLASS_ID = 0x83c95aec;
 
     protected byte[] pq;
@@ -28,7 +18,9 @@ public class PQInner extends TLObject {
     protected byte[] serverNonce;
     protected byte[] newNonce;
 
-    public PQInner(byte[] pq, byte[] p, byte[] q, byte[] nonce, byte[] serverNonce, byte[] newNonce) {
+    public PQInnerData() { }
+
+    public PQInnerData(byte[] pq, byte[] p, byte[] q, byte[] nonce, byte[] serverNonce, byte[] newNonce) {
         this.pq = pq;
         this.p = p;
         this.q = q;
@@ -37,18 +29,9 @@ public class PQInner extends TLObject {
         this.newNonce = newNonce;
     }
 
-    public PQInner() {
-
-    }
-
     @Override
     public int getClassId() {
         return CLASS_ID;
-    }
-
-    @Override
-    public String toString() {
-        return "pQInner#83c95aec";
     }
 
     public byte[] getPq() {
@@ -77,21 +60,27 @@ public class PQInner extends TLObject {
 
     @Override
     public void serializeBody(OutputStream stream) throws IOException {
-        writeTLBytes(this.pq, stream);
-        writeTLBytes(this.p, stream);
-        writeTLBytes(this.q, stream);
-        writeByteArray(this.nonce, stream);
-        writeByteArray(this.serverNonce, stream);
-        writeByteArray(this.newNonce, stream);
+        StreamingUtils.writeTLBytes(this.pq, stream);
+        StreamingUtils.writeTLBytes(this.p, stream);
+        StreamingUtils.writeTLBytes(this.q, stream);
+        StreamingUtils.writeByteArray(this.nonce, stream);
+        StreamingUtils.writeByteArray(this.serverNonce, stream);
+        StreamingUtils.writeByteArray(this.newNonce, stream);
     }
 
     @Override
     public void deserializeBody(InputStream stream, TLContext context) throws IOException {
-        this.pq = readTLBytes(stream);
-        this.p = readTLBytes(stream);
-        this.q = readTLBytes(stream);
-        this.nonce = readBytes(16, stream);
-        this.serverNonce = readBytes(16, stream);
-        this.newNonce = readBytes(32, stream);
+        this.pq = StreamingUtils.readTLBytes(stream);
+        this.p = StreamingUtils.readTLBytes(stream);
+        this.q = StreamingUtils.readTLBytes(stream);
+        this.nonce = StreamingUtils.readBytes(16, stream);
+        this.serverNonce = StreamingUtils.readBytes(16, stream);
+        this.newNonce = StreamingUtils.readBytes(32, stream);
     }
+
+    @Override
+    public String toString() {
+        return "p_q_inner_data#83c95aec";
+    }
+
 }
